@@ -1,90 +1,110 @@
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var departments = [
-        'Department of Medical Services',
-        'Department of Public Health',
-        'Department of Health Technology',
-        'Department of Research and Development',
-        'Department of Health Regulation',
-        // Add other departments as needed
-    ];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Room Booking</title>
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <!-- FullCalendar JavaScript -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+</head>
+<body>
+    <h1>Meeting Room Booking</h1>
+    <div id='calendar'></div>
 
-    // Fetch existing events from the backend
-    fetch('/api/events')
-        .then(response => response.json())
-        .then(events => {
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                selectable: true,
-                editable: true, // Allows events to be edited or deleted
-                events: events,  // Load events fetched from the backend
-                select: function(info) {
-                    var title = prompt('Enter Meeting Title:');
-                    
-                    // Create a dropdown for department selection
-                    if (title) {
-                        var department = promptDepartmentSelection(departments);
-                        if (department) {
-                            var event = {
-                                title: `${title} - ${department}`,
-                                start: info.startStr,
-                                end: info.endStr,
-                                allDay: info.allDay,
-                            };
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var departments = [
+                'Department of Medical Services',
+                'Department of Public Health',
+                'Department of Health Technology',
+                'Department of Research and Development',
+                'Department of Health Regulation',
+                // Add other departments as needed
+            ];
 
-                            // Send the event data to your backend
-                            fetch('/api/add-event', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(event)
-                            }).then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        calendar.addEvent(event);
-                                        alert('Meeting booked on ' + info.startStr);
-                                    } else {
-                                        alert('Error booking meeting');
-                                    }
-                                });
-                        }
-                    }
-                    calendar.unselect();
-                },
-                eventClick: function(info) {
-                    if (confirm("Do you want to cancel this booking?")) {
-                        var bookingId = info.event.extendedProps.bookingId;
+            // Fetch existing events from the backend
+            fetch('/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        selectable: true,
+                        editable: true, // Allows events to be edited or deleted
+                        events: events,  // Load events fetched from the backend
+                        select: function(info) {
+                            var title = prompt('Enter Meeting Title:');
+                            
+                            // Create a dropdown for department selection
+                            if (title) {
+                                var department = promptDepartmentSelection(departments);
+                                if (department) {
+                                    var event = {
+                                        title: `${title} - ${department}`,
+                                        start: info.startStr,
+                                        end: info.endStr,
+                                        allDay: info.allDay,
+                                    };
 
-                        // Send delete request to your backend
-                        fetch('/api/delete-event', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ bookingId: bookingId })
-                        }).then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    info.event.remove(); // Remove event from calendar
-                                    alert('Booking cancelled.');
-                                } else {
-                                    alert('Failed to cancel booking: ' + data.message);
+                                    // Send the event data to your backend
+                                    fetch('/api/add-event', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(event)
+                                    }).then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                calendar.addEvent(event);
+                                                alert('Meeting booked on ' + info.startStr);
+                                            } else {
+                                                alert('Error booking meeting');
+                                            }
+                                        });
                                 }
-                            });
-                    }
-                }
-            });
+                            }
+                            calendar.unselect();
+                        },
+                        eventClick: function(info) {
+                            if (confirm("Do you want to cancel this booking?")) {
+                                var bookingId = info.event.extendedProps.bookingId;
 
-            calendar.render();
+                                // Send delete request to your backend
+                                fetch('/api/delete-event', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ bookingId: bookingId })
+                                }).then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            info.event.remove(); // Remove event from calendar
+                                            alert('Booking cancelled.');
+                                        } else {
+                                            alert('Failed to cancel booking: ' + data.message);
+                                        }
+                                    });
+                            }
+                        }
+                    });
+
+                    calendar.render();
+                });
+
+            function promptDepartmentSelection(departments) {
+                var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
+                var selection = prompt(`Select Department:\n${departmentList}`);
+                var index = parseInt(selection) - 1;
+                return departments[index] || null;
+            }
         });
+    </script>
+</body>
+</html>                              
 
-    function promptDepartmentSelection(departments) {
-        var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
-        var selection = prompt(`Select Department:\n${departmentList}`);
-        var index = parseInt(selection) - 1;
-        return departments[index] || null;
-    }
-});
                    
    
