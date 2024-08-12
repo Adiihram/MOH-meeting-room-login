@@ -3,9 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>MOH Meeting Room Login</title>
+    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
+    <script>
+        var auth0 = new auth0.WebAuth({
+            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
+            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9,
+            redirectUri: 'https://sites.google.com/view/dppmeetingroombooking/home',
+            responseType: 'token id_token',
+            scope: 'openid profile email'
+        });
+
+        function login() {
+            auth0.authorize();
+        }
+    </script>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <h2>Login to Book a Room</h2>
+    <button onclick="login()">Login</button>
 </body>
 </html>
