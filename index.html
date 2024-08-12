@@ -9,70 +9,75 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add other departments as needed
     ];
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        selectable: true,
-        editable: true, // Allows events to be edited or deleted
-        select: function(info) {
-            var title = prompt('Enter Meeting Title:');
-            
-            // Create a dropdown for department selection
-            if (title) {
-                var department = promptDepartmentSelection(departments);
-                if (department) {
-                    var booking = {
-                        date: info.startStr,
-                        startTime: info.startStr,
-                        endTime: info.endStr,
-                        title: title,
-                        department: department,
-                        user: 'User Name' // Replace with actual user information
-                    };
+    // Fetch existing events from the backend
+    fetch('/api/events')
+        .then(response => response.json())
+        .then(events => {
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                selectable: true,
+                editable: true, // Allows events to be edited or deleted
+                events: events,  // Load events fetched from the backend
+                select: function(info) {
+                    var title = prompt('Enter Meeting Title:');
+                    
+                    // Create a dropdown for department selection
+                    if (title) {
+                        var department = promptDepartmentSelection(departments);
+                        if (department) {
+                            var event = {
+                                title: `${title} - ${department}`,
+                                start: info.startStr,
+                                end: info.endStr,
+                                allDay: info.allDay,
+                            };
 
-                    // Send booking to Google Sheets
-                    fetch('YOUR_WEB_APP_URL', { // Replace with your Google Apps Script Web App URL
-                        method: 'POST',
-                        body: JSON.stringify(booking)
-                    })
-                    .then(response => response.text())
-                    .then(bookingId => {
-                        calendar.addEvent({
-                            id: bookingId,
-                            title: title,
-                            start: info.startStr,
-                            end: info.endStr,
-                            allDay: info.allDay
-                        });
-                        alert('Meeting booked on ' + info.startStr);
-                    })
-                    .catch(error => console.error('Error:', error));
-                }
-            }
-            calendar.unselect();
-        },
-        eventClick: function(info) {
-            if (confirm("Do you want to cancel this booking?")) {
-                var bookingId = info.event.id;
-
-                // Send delete request to Google Sheets
-                fetch('YOUR_DELETE_WEB_APP_URL', { // Replace with your Google Apps Script Web App URL for deletion
-                    method: 'POST',
-                    body: JSON.stringify({ bookingId: bookingId })
-                })
-                .then(response => response.text())
-                .then(result => {
-                    if (result === 'Success') {
-                        info.event.remove(); // Remove event from calendar
-                        alert('Booking cancelled.');
-                    } else {
-                        alert('Failed to cancel booking: ' + result);
+                            // Send the event data to your backend
+                            fetch('/api/add-event', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(event)
+                            }).then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        calendar.addEvent(event);
+                                        alert('Meeting booked on ' + info.startStr);
+                                    } else {
+                                        alert('Error booking meeting');
+                                    }
+                                });
+                        }
                     }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-    });
-    calendar.render();
+                    calendar.unselect();
+                },
+                eventClick: function(info) {
+                    if (confirm("Do you want to cancel this booking?")) {
+                        var bookingId = info.event.extendedProps.bookingId;
+
+                        // Send delete request to your backend
+                        fetch('/api/delete-event', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ bookingId: bookingId })
+                        }).then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    info.event.remove(); // Remove event from calendar
+                                    alert('Booking cancelled.');
+                                } else {
+                                    alert('Failed to cancel booking: ' + data.message);
+                                }
+                            });
+                    }
+                }
+            });
+
+            calendar.render();
+        });
 
     function promptDepartmentSelection(departments) {
         var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
@@ -80,4 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var index = parseInt(selection) - 1;
         return departments[index] || null;
     }
-});         
+});
+                   
+   
