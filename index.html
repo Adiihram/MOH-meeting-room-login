@@ -8,13 +8,69 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <!-- Auth0 JavaScript -->
+    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
     <div id='calendar'></div>
+    <button id="login" onclick="login()">Login</button>
+    <button id="logout" onclick="logout()" style="display:none;">Logout</button>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        var auth0 = new auth0.WebAuth({
+            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',  // Your Auth0 domain
+            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',  // Your Auth0 client ID
+            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',  // Your redirect URI
+            responseType: 'token id_token',
+            scope: 'openid profile email'
+        });
+
+        function login() {
+            auth0.authorize();
+        }
+
+        function logout() {
+            auth0.logout({
+                returnTo: window.location.href
+            });
+        }
+
+        function handleAuthentication() {
+            auth0.parseHash(function(err, authResult) {
+                if (authResult && authResult.accessToken && authResult.idToken) {
+                    window.location.hash = '';
+                    setSession(authResult);
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('logout').style.display = 'block';
+                    loadCalendar();
+                } else if (err) {
+                    console.log(err);
+                    alert('Error: ' + err.errorDescription);
+                } else {
+                    document.getElementById('login').style.display = 'block';
+                }
+            });
+        }
+
+        function setSession(authResult) {
+            var expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
+            localStorage.setItem('access_token', authResult.accessToken);
+            localStorage.setItem('id_token', authResult.idToken);
+            localStorage.setItem('expires_at', expiresAt);
+        }
+
+        function isAuthenticated() {
+            var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
+            return new Date().getTime() < expiresAt;
+        }
+
+        function loadCalendar() {
+            if (!isAuthenticated()) {
+                login();
+                return;
+            }
+
             var calendarEl = document.getElementById('calendar');
             var departments = [
                 'Department of Medical Services',
@@ -26,7 +82,11 @@
             ];
 
             // Fetch existing events from the backend
-            fetch('/api/events')
+            fetch('/api/events', {
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem('access_token')
+                }
+            })
                 .then(response => response.json())
                 .then(events => {
                     var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -52,7 +112,8 @@
                                     fetch('/api/add-event', {
                                         method: 'POST',
                                         headers: {
-                                            'Content-Type': 'application/json'
+                                            'Content-Type': 'application/json',
+                                            Authorization: 'Bearer ' + localStorage.getItem('access_token')
                                         },
                                         body: JSON.stringify(event)
                                     }).then(response => response.json())
@@ -76,7 +137,8 @@
                                 fetch('/api/delete-event', {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/json'
+                                        'Content-Type': 'application/json',
+                                        Authorization: 'Bearer ' + localStorage.getItem('access_token')
                                     },
                                     body: JSON.stringify({ bookingId: bookingId })
                                 }).then(response => response.json())
@@ -101,10 +163,14 @@
                 var index = parseInt(selection) - 1;
                 return departments[index] || null;
             }
-        });
+        }
+
+        handleAuthentication();
+        if (isAuthenticated()) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('logout').style.display = 'block';
+            loadCalendar();
+        }
     </script>
 </body>
-</html>                              
-
-                   
-   
+</html>   
