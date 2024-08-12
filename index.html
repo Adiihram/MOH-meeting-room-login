@@ -1,46 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOH Meeting Room Login</title>
-    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
-    <script>
-        var auth0 = new auth0.WebAuth({
-            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
-            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
-            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',  // Your GitHub Pages URL
-            responseType: 'token id_token',
-            scope: 'openid profile email'
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var departments = [
+        'Department of Medical Services',
+        'Department of Public Health',
+        'Department of Health Technology',
+        'Department of Research and Development',
+        'Department of Health Regulation',
+        // Add other departments as needed
+    ];
 
-        // Function to handle authentication callback and redirect
-        function handleAuthentication() {
-            auth0.parseHash(function (err, authResult) {
-                if (authResult && authResult.accessToken && authResult.idToken) {
-                    // Redirect after successful login
-                    window.location.href = "https://adiihram.github.io/MOH-meeting-room-login/dashboard.html"; // Replace with your target page
-                } else if (err) {
-                    console.error("Error: " + err.error);
-                    alert("Error: " + err.error_description);
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        editable: true, // Allows events to be edited or deleted
+        select: function(info) {
+            var title = prompt('Enter Meeting Title:');
+            
+            // Create a dropdown for department selection
+            if (title) {
+                var department = promptDepartmentSelection(departments);
+                if (department) {
+                    var booking = {
+                        date: info.startStr,
+                        startTime: info.startStr,
+                        endTime: info.endStr,
+                        title: title,
+                        department: department,
+                        user: 'User Name' // Replace with actual user information
+                    };
+
+                    // Send booking to Google Sheets
+                    fetch('YOUR_WEB_APP_URL', { // Replace with your Google Apps Script Web App URL
+                        method: 'POST',
+                        body: JSON.stringify(booking)
+                    })
+                    .then(response => response.text())
+                    .then(bookingId => {
+                        calendar.addEvent({
+                            id: bookingId,
+                            title: title,
+                            start: info.startStr,
+                            end: info.endStr,
+                            allDay: info.allDay
+                        });
+                        alert('Meeting booked on ' + info.startStr);
+                    })
+                    .catch(error => console.error('Error:', error));
                 }
-            });
-        }
+            }
+            calendar.unselect();
+        },
+        eventClick: function(info) {
+            if (confirm("Do you want to cancel this booking?")) {
+                var bookingId = info.event.id;
 
-        // Function to initiate login
-        function login() {
-            auth0.authorize();
+                // Send delete request to Google Sheets
+                fetch('YOUR_DELETE_WEB_APP_URL', { // Replace with your Google Apps Script Web App URL for deletion
+                    method: 'POST',
+                    body: JSON.stringify({ bookingId: bookingId })
+                })
+                .then(response => response.text())
+                .then(result => {
+                    if (result === 'Success') {
+                        info.event.remove(); // Remove event from calendar
+                        alert('Booking cancelled.');
+                    } else {
+                        alert('Failed to cancel booking: ' + result);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
         }
+    });
+    calendar.render();
 
-        // Call the authentication handler when the page loads
-        window.onload = function() {
-            handleAuthentication();
-        };
-    </script>
-</head>
-<body>
-    <h1>MOH Meeting Room Booking Page Beta</h1>
-    <h2>Login to Book a Room</h2>
-    <button onclick="login()">Login</button>
-</body>
-</html>
+    function promptDepartmentSelection(departments) {
+        var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
+        var selection = prompt(`Select Department:\n${departmentList}`);
+        var index = parseInt(selection) - 1;
+        return departments[index] || null;
+    }
+});         
