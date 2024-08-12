@@ -9,18 +9,37 @@
         var auth0 = new auth0.WebAuth({
             domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
             clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
-            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login',
+            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',  // Your GitHub Pages URL
             responseType: 'token id_token',
             scope: 'openid profile email'
         });
 
+        // Function to handle authentication callback and redirect
+        function handleAuthentication() {
+            auth0.parseHash(function (err, authResult) {
+                if (authResult && authResult.accessToken && authResult.idToken) {
+                    // Redirect after successful login
+                    window.location.href = "https://adiihram.github.io/MOH-meeting-room-login/dashboard.html"; // Replace with your target page
+                } else if (err) {
+                    console.error("Error: " + err.error);
+                    alert("Error: " + err.error_description);
+                }
+            });
+        }
+
+        // Function to initiate login
         function login() {
             auth0.authorize();
         }
+
+        // Call the authentication handler when the page loads
+        window.onload = function() {
+            handleAuthentication();
+        };
     </script>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <h1>MOH Meeting Room Booking Page Beta</h1>
     <h2>Login to Book a Room</h2>
     <button onclick="login()">Login</button>
 </body>
