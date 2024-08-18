@@ -9,7 +9,7 @@
     <!-- FullCalendar JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <!-- Auth0 JavaScript -->
-    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
     <!-- Firebase App (the core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
@@ -18,20 +18,15 @@
 <body>
     <h1>Meeting Room Booking</h1>
     
-    <!-- Print button -->
-    <button id="printButton" style="display:none;" onclick="printCalendar()">Print Calendar</button>
-
-    <!-- Calendar element, hidden by default -->
+    <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
-
-    <!-- Authentication buttons -->
-    <button id="login" onclick="window.login()">Login</button>
-    <button id="logout" onclick="window.logout()" style="display:none;">Logout</button>
+    <button id="loginButton">Login</button>
+    <button id="logoutButton" style="display:none;">Logout</button>
 
     <script>
-        console.log("Script Loaded");
+        let auth0Client = null;
+        let db = null;
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
             authDomain: "moh-meeting-room-booking.firebaseapp.com",
@@ -43,93 +38,150 @@
             measurementId: "G-MDSDN8ZS5F"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-
-        // Initialize Realtime Database
-        const db = firebase.database();
-        console.log("Firebase Initialized");
-
-        // We'll initialize auth0 after the DOM is fully loaded
-        let auth0;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded');
-
-            // Initialize Auth0
-            auth0 = new auth0.WebAuth({
-                domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
-                clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
-                redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',
-                responseType: 'token id_token',
-                scope: 'openid profile email'
-            });
-
-            // Now that auth0 is initialized, we can set up our global functions
-            window.login = function() {
-                console.log("Login button clicked");
-                auth0.authorize();
+        function initializeFirebase() {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
             }
+            db = firebase.database();
+            console.log("Firebase initialized");
+        }
 
-            window.logout = function() {
-                console.log("Logout button clicked");
-                auth0.logout({
-                    returnTo: window.location.href
-                });
-                document.getElementById('calendar').style.display = 'none';
-                document.getElementById('printButton').style.display = 'none';
-            }
-
-            handleAuthentication();
-            
-            if (isAuthenticated()) {
-                document.getElementById('login').style.display = 'none';
-                document.getElementById('logout').style.display = 'block';
-                document.getElementById('printButton').style.display = 'block';
-                loadCalendar(localStorage.getItem('id_token'));
+        window.onload = async function() {
+            initializeFirebase();
+            await configureClient();
+            updateUI();
+            const isAuthenticated = await auth0Client.isAuthenticated();
+            if (isAuthenticated) {
+                console.log('User is authenticated');
+                document.getElementById('loginButton').style.display = 'none';
+                document.getElementById('logoutButton').style.display = 'inline-block';
+                document.getElementById('printButton').style.display = 'inline-block';
+                loadCalendar();
             } else {
-                console.log('User is not authenticated, showing login button.');
-                document.getElementById('calendar').style.display = 'none';
-                document.getElementById('login').style.display = 'block';
+                console.log('User is not authenticated');
             }
-        });
+        };
 
-        function handleAuthentication() {
-            console.log("Handling Authentication");
-            auth0.parseHash(function(err, authResult) {
-                if (authResult && authResult.accessToken && authResult.idToken) {
-                    console.log("Authentication successful");
-                    window.location.hash = '';
-                    setSession(authResult);
-                    document.getElementById('login').style.display = 'none';
-                    document.getElementById('logout').style.display = 'block';
-                    document.getElementById('printButton').style.display = 'block';
-                    loadCalendar(authResult.idTokenPayload.sub);
-                } else if (err) {
-                    console.log('Authentication error:', err);
-                    alert('Error: ' + err.errorDescription);
-                } else {
-                    console.log("Authentication failed");
-                    document.getElementById('login').style.display = 'block';
+        async function configureClient() {
+            auth0Client = await auth0.createAuth0Client({
+                domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
+                clientId: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
+                authorizationParams: {
+                    redirect_uri: window.location.origin
                 }
             });
         }
 
-        function setSession(authResult) {
-            console.log("Setting session");
-            const expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
-            localStorage.setItem('access_token', authResult.accessToken);
-            localStorage.setItem('id_token', authResult.idToken);
-            localStorage.setItem('expires_at', expiresAt);
-            console.log('Session set with authResult:', authResult);
+        async function login() {
+            await auth0Client.loginWithRedirect();
         }
 
-        function isAuthenticated() {
-            console.log("Checking authentication status");
-            const expiresAt = JSON.parse(localStorage.getItem('expires_at'));
-            const isAuth = new Date().getTime() < expiresAt;
-            console.log('Is authenticated:', isAuth);
-            return isAuth;
+        function logout() {
+            auth0Client.logout({
+                logoutParams: {
+                    returnTo: window.location.origin
+                }
+            });
+        }
+
+        async function updateUI() {
+            const isAuthenticated = await auth0Client.isAuthenticated();
+            document.getElementById('loginButton').style.display = isAuthenticated ? 'none' : 'block';
+            document.getElementById('logoutButton').style.display = isAuthenticated ? 'block' : 'none';
+            if (isAuthenticated) {
+                document.getElementById('printButton').style.display = 'block';
+                document.getElementById('calendar').style.display = 'block';
+                loadCalendar();
+            }
+        }
+
+        document.getElementById('loginButton').addEventListener('click', login);
+        document.getElementById('logoutButton').addEventListener('click', logout);
+        document.getElementById('printButton').addEventListener('click', printCalendar);
+
+        function printCalendar() {
+            window.print();
+        }
+
+        function loadCalendar() {
+            console.log("Loading calendar");
+            const calendarEl = document.getElementById('calendar');
+            calendarEl.style.display = 'block';
+
+            db.ref('events').once('value').then(function(snapshot) {
+                const events = [];
+                snapshot.forEach(function(childSnapshot) {
+                    const event = childSnapshot.val();
+                    event.id = childSnapshot.key;
+                    events.push(event);
+                });
+
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'timeGridWeek',
+                    events: events,
+                    selectable: true,
+                    selectHelper: true,
+                    select: async function(info) {
+                        const title = prompt('Enter Meeting Title:');
+                        if (title) {
+                            const department = selectDepartment();
+                            if (department) {
+                                const user = await auth0Client.getUser();
+                                const newEvent = {
+                                    title: title + ' - ' + department,
+                                    start: info.startStr,
+                                    end: info.endStr,
+                                    allDay: false,
+                                    userId: user.sub,
+                                    color: getDepartmentColor(department)
+                                };
+
+                                db.ref('events').push(newEvent).then(function(ref) {
+                                    newEvent.id = ref.key;
+                                    calendar.addEvent(newEvent);
+                                    alert('Meeting booked successfully.');
+                                }).catch(function(error) {
+                                    console.error('Error saving event:', error);
+                                    alert('Failed to book meeting.');
+                                });
+                            }
+                        }
+                        calendar.unselect();
+                    },
+                    eventClick: async function(info) {
+                        const user = await auth0Client.getUser();
+                        if (info.event.extendedProps.userId === user.sub) {
+                            const action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
+                            if (action === 'edit') {
+                                const newTitle = prompt('Enter new meeting title:', info.event.title);
+                                if (newTitle) {
+                                    const newDepartment = selectDepartment();
+                                    if (newDepartment) {
+                                        info.event.setProp('title', newTitle + ' - ' + newDepartment);
+                                        info.event.setProp('color', getDepartmentColor(newDepartment));
+                                        db.ref('events/' + info.event.id).update({
+                                            title: newTitle,
+                                            department: newDepartment,
+                                            color: getDepartmentColor(newDepartment)
+                                        });
+                                    }
+                                }
+                            } else if (action === 'delete') {
+                                if (confirm("Are you sure you want to delete this booking?")) {
+                                    info.event.remove();
+                                    db.ref('events/' + info.event.id).remove();
+                                }
+                            }
+                        } else {
+                            alert("You are not authorized to edit or delete this booking.");
+                        }
+                    }
+                });
+
+                calendar.render();
+            }).catch(function(error) {
+                console.error('Error fetching events:', error);
+            });
         }
 
         function selectDepartment() {
@@ -163,101 +215,6 @@
             };
 
             return departmentColors[department] || 'gray';
-        }
-
-        function printCalendar() {
-            window.print();
-        }
-
-        function loadCalendar(userId) {
-            if (!isAuthenticated()) {
-                login();
-                return;
-            }
-
-            console.log("Loading calendar for user:", userId);
-            const calendarEl = document.getElementById('calendar');
-            calendarEl.style.display = 'block';
-
-            db.ref('events').once('value').then(function(snapshot) {
-                const events = [];
-                snapshot.forEach(function(childSnapshot) {
-                    const event = childSnapshot.val();
-                    event.id = childSnapshot.key;
-                    console.log('Fetched event:', event);
-                    events.push(event);
-                });
-
-                console.log('Events array:', events);
-
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'timeGridWeek',
-                    events: events,
-                    selectable: true,
-                    selectHelper: true,
-                    select: function(info) {
-                        console.log('Selected time range:', info.startStr, 'to', info.endStr);
-
-                        const title = prompt('Enter Meeting Title:');
-                        if (title) {
-                            const department = selectDepartment();
-                            if (department) {
-                                const newEvent = {
-                                    title: title + ' - ' + department,
-                                    start: info.startStr,
-                                    end: info.endStr,
-                                    allDay: false,
-                                    userId: userId,
-                                    color: getDepartmentColor(department)
-                                };
-
-                                db.ref('events').push(newEvent).then(function(ref) {
-                                    newEvent.id = ref.key;
-                                    calendar.addEvent(newEvent);
-                                    console.log('Event added:', newEvent);
-                                    alert('Meeting booked successfully.');
-                                }).catch(function(error) {
-                                    console.error('Error saving event:', error);
-                                    alert('Failed to book meeting.');
-                                });
-                            }
-                        }
-                        calendar.unselect();
-                    },
-                    eventClick: function(info) {
-                        if (info.event.extendedProps.userId === userId) {
-                            const action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                            if (action === 'edit') {
-                                const newTitle = prompt('Enter new meeting title:', info.event.title);
-                                if (newTitle) {
-                                    const newDepartment = selectDepartment();
-                                    if (newDepartment) {
-                                        info.event.setProp('title', newTitle + ' - ' + newDepartment);
-                                        info.event.setProp('color', getDepartmentColor(newDepartment));
-                                        db.ref('events/' + info.event.id).update({
-                                            title: newTitle,
-                                            department: newDepartment,
-                                            color: getDepartmentColor(newDepartment)
-                                        });
-                                    }
-                                }
-                            } else if (action === 'delete') {
-                                if (confirm("Are you sure you want to delete this booking?")) {
-                                    info.event.remove();
-                                    db.ref('events/' + info.event.id).remove();
-                                }
-                            }
-                        } else {
-                            alert("You are not authorized to edit or delete this booking.");
-                        }
-                    }
-                });
-
-                calendar.render();
-                console.log("Calendar rendered with events:", events);
-            }).catch(function(error) {
-                console.error('Error fetching events:', error);
-            });
         }
     </script>
 </body>
