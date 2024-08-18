@@ -3,17 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.8</title>
-    <!-- FullCalendar CSS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <!-- FullCalendar JavaScript -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <!-- Auth0 JavaScript -->
-    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <!-- Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>Pac-Man Themed Login - DPP Meeting Room</title>
     <style>
         body {
             font-family: 'Courier New', monospace;
@@ -32,12 +22,12 @@
             border-radius: 10px;
             border: 2px solid #0f0;
             box-shadow: 0 0 10px #0f0;
+            position: relative;
         }
         .login-container h1 {
             margin-bottom: 20px;
             font-size: 24px;
             text-shadow: 0 0 5px #0f0;
-            white-space: pre;
         }
         .login-container button {
             padding: 10px 20px;
@@ -57,16 +47,14 @@
         #maze {
             width: 300px;
             height: 300px;
-            border: 2px solid #0f0;
             margin: 20px auto;
             position: relative;
             background-color: #000;
-            display: grid;
-            grid-template-columns: repeat(20, 15px);
-            grid-template-rows: repeat(20, 15px);
+            border: 2px solid #0f0;
         }
         .wall {
             background-color: #0f0;
+            position: absolute;
         }
         #pacman, .ghost {
             width: 15px;
@@ -83,78 +71,16 @@
             background-color: red;
             border-radius: 50%;
         }
-        .inline-form {
-            position: absolute;
-            background-color: white;
-            border: 1px solid #ccc;
-            padding: 10px;
-            z-index: 1000;
-        }
-        .inline-form input, .inline-form select {
-            margin: 5px 0;
-            padding: 5px;
-            font-size: 14px;
-        }
-        .inline-form button {
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .inline-form button.cancel {
-            background-color: #dc3545;
-        }
     </style>
 </head>
 <body>
-    <div id="login-section" class="login-container">
-        <h1>
-  ____  ____  ____    __  __  ____  __    ____  ____  __  ____ 
- (  __)(  __)(_  _)  (  )(  )(_  _)/  \  (  __)(  __)/  \(  __)
-  ) _)  ) _)   )(     )( / (_  )( (  O )  ) _)  ) _)(  O )) _) 
- (____)(__)   (__)   (__)\____)(__) \__/  (__)  (__)  \__/(__) 
-        </h1>
+    <div class="login-container">
+        <h1>DPP Meeting Room</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
-
-    <div id="calendar-section" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;">
-        <button id="printButton" style="display:none;">Print Calendar</button>
-        <button id="logoutButton" style="display:none;">Logout</button>
-        <div id="calendar"></div>
-    </div>
-
     <script>
         var auth0Client = null;
-        let db = null;
-        let activeForm = null;
-        let departments = [
-            'Department of Medical Services',
-            'Department of Public Health',
-            'Department of Health Technology',
-            'Department of Research and Development',
-            'Department of Health Regulation'
-        ];
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
-            authDomain: "moh-meeting-room-booking.firebaseapp.com",
-            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "moh-meeting-room-booking",
-            storageBucket: "moh-meeting-room-booking.appspot.com",
-            messagingSenderId: "629503206549",
-            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
-            measurementId: "G-MDSDN8ZS5F"
-        };
-
-        function initializeFirebase() {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.database();
-            console.log("Firebase initialized");
-        }
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
@@ -173,8 +99,7 @@
                     console.log("Authentication successful");
                     window.location.hash = '';
                     setSession(authResult);
-                    showCalendarSection();
-                    loadCalendar(authResult.idTokenPayload.sub); // Use the sub property as userId
+                    window.location.href = "/calendar.html";
                 } else if (err) {
                     console.error('Authentication error:', err);
                     alert('Error: ' + err.errorDescription);
@@ -197,214 +122,49 @@
             auth0Client.authorize();
         }
 
-        function logout() {
-            auth0Client.logout({
-                returnTo: window.location.origin
-            });
-            document.getElementById('calendar').style.display = 'none'; // Hide the calendar on logout
-            document.getElementById('printButton').style.display = 'none'; // Hide the print button on logout
-            document.getElementById('login-section').style.display = 'flex'; // Show the login section on logout
-            document.getElementById('calendar-section').style.display = 'none'; // Hide the calendar section on logout
-        }
-
-        window.onload = function() {
-            initializeAuth0();
-            initializeFirebase();
-            handleAuthentication();
-            document.getElementById('loginButton').addEventListener('click', login);
-            document.getElementById('logoutButton').addEventListener('click', logout);
-            document.getElementById('printButton').addEventListener('click', printCalendar);
-            createMaze(); // Create the maze
-            startGame(); // Start the Pac-Man and ghost movement
-        };
-
-        function showCalendarSection() {
-            document.getElementById('login-section').style.display = 'none'; // Hide the login section
-            document.getElementById('calendar-section').style.display = 'block'; // Show the calendar section
-            document.getElementById('logoutButton').style.display = 'inline-block'; // Show the logout button
-            document.getElementById('printButton').style.display = 'inline-block'; // Show the print button
-        }
-
-        function printCalendar() {
-            window.print();
-        }
-
-        function loadCalendar(userId) {
-            if (!isAuthenticated()) {
-                login();
-                return;
-            }
-
-            console.log("Loading calendar for user:", userId);
-            var calendarEl = document.getElementById('calendar');
-            calendarEl.style.display = 'block'; // Show the calendar after login
-
-            // Fetch events from Realtime Database
-            db.ref('events').once('value').then(function(snapshot) {
-                var events = [];
-                snapshot.forEach(function(childSnapshot) {
-                    var event = childSnapshot.val();
-                    event.id = childSnapshot.key;
-                    console.log('Fetched event:', event);
-                    events.push(event);
-                });
-
-                console.log('Events array:', events);
-
-                var calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'timeGridWeek', // Use timeGridWeek for time selection
-                    events: events,
-                    selectable: true,
-                    selectHelper: true, // Allows the user to see the selected range
-                    select: function(info) {
-                        console.log('Selected time range:', info.startStr, 'to', info.endStr);
-
-                        var title = prompt('Enter Meeting Title:');
-                        if (title) {
-                            var department = selectDepartment();
-                            if (department) {
-                                var newEvent = {
-                                    title: title + ' - ' + department,
-                                    start: info.startStr,
-                                    end: info.endStr,
-                                    allDay: false,  // Ensure it's not an all-day event to allow time range
-                                    userId: userId,
-                                    color: getDepartmentColor(department) // Assign a color based on department
-                                };
-
-                                // Save the event to Firebase
-                                db.ref('events').push(newEvent).then(function(ref) {
-                                    newEvent.id = ref.key; // Save the Firebase-generated ID
-                                    calendar.addEvent(newEvent);
-                                    console.log('Event added:', newEvent);
-                                    alert('Meeting booked successfully.');
-                                }).catch(function(error) {
-                                    console.error('Error saving event:', error);
-                                    logError('Error saving event', error);
-                                    alert('Failed to book meeting.');
-                                });
-                            }
-                        }
-                        calendar.unselect();
-                    },
-                    eventClick: function(info) {
-                        if (info.event.extendedProps.userId === userId) {
-                            var action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                            if (action === 'edit') {
-                                var newTitle = prompt('Enter new meeting title:', info.event.title);
-                                if (newTitle) {
-                                    var newDepartment = selectDepartment();
-                                    if (newDepartment) {
-                                        info.event.setProp('title', newTitle + ' - ' + newDepartment);
-                                        info.event.setProp('color', getDepartmentColor(newDepartment));
-                                        db.ref('events/' + info.event.id).update({
-                                            title: newTitle,
-                                            department: newDepartment,
-                                            color: getDepartmentColor(newDepartment)
-                                        });
-                                    }
-                                }
-                            } else if (action === 'delete') {
-                                if (confirm("Are you sure you want to delete this booking?")) {
-                                    info.event.remove();
-                                    db.ref('events/' + info.event.id).remove();
-                                }
-                            }
-                        } else {
-                            alert("You are not authorized to edit or delete this booking.");
-                        }
-                    }
-                });
-
-                calendar.render();
-                console.log("Calendar rendered with events:", events);
-            }).catch(function(error) {
-                console.error('Error fetching events:', error);
-            });
-        }
-
-        function selectDepartment() {
-            var departmentList = departments.map(function(dept, index) {
-                return (index + 1) + '. ' + dept;
-            }).join('\n');
-
-            var selection = prompt('Select Department:\n' + departmentList);
-            var selectedIndex = parseInt(selection) - 1;
-
-            if (selectedIndex >= 0 && selectedIndex < departments.length) {
-                return departments[selectedIndex];
-            } else {
-                var newDepartment = prompt('Department not listed. Enter your department name:');
-                if (newDepartment) {
-                    departments.push(newDepartment);
-                    return newDepartment;
-                }
-                alert('Invalid selection. Please try again.');
-                return null;
-            }
-        }
-
-        function getDepartmentColor(department) {
-            var departmentColors = {
-                'Department of Medical Services': 'blue',
-                'Department of Public Health': 'green',
-                'Department of Health Technology': 'red',
-                'Department of Research and Development': 'orange',
-                'Department of Health Regulation': 'purple'
-                // Add other departments with corresponding colors
-            };
-
-            return departmentColors[department] || 'gray'; // Default to gray if no color is specified
-        }
-
-        function logError(message, error) {
-            db.ref('logs').push({
-                message: message,
-                error: error.toString(),
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        function isAuthenticated() {
-            console.log("Checking authentication status");
-            var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
-            var isAuth = new Date().getTime() < expiresAt;
-            console.log('Is authenticated:', isAuth);
-            return isAuth;
-        }
-
-        // Pac-Man and ghosts movement
         function createMaze() {
             const maze = document.getElementById('maze');
             const layout = [
-                "WWWWWWWWWWWWWWWWWWWW",
-                "W........WW........W",
-                "W.WWWW.WW.WW.WWWW.WW",
-                "W.WWWW.WW.WW.WWWW.WW",
-                "W..................W",
-                "W.WW.WWWWWWWW.WWW.WW",
-                "W.WW.WWWWWWWW.WWW.WW",
-                "W........WW........W",
-                "WWWWWWW.WW.WWWWWWWWW",
-                "WWWWWWW.WW.WWWWWWWWW",
-                "WWWWWWW.WW.WWWWWWWWW",
-                "W..................W",
-                "W.WWWW.WW.WW.WWWW.WW",
-                "W.WWWW.WW.WW.WWWW.WW",
-                "W........WW........W",
-                "WWWWWWWWWWWWWWWWWWWW"
+                "WWWWWWWWWWWWWWWWWWWWW",
+                "W.........W.........W",
+                "W.WWW.WWW.W.WWW.WWW.W",
+                "W...................W",
+                "W.WWW.W.WWWWW.W.WWW.W",
+                "W.....W...W...W.....W",
+                "WWWWW.WWW W WWW.WWWWW",
+                "W.....W       W.....W",
+                "WWWWW.W WWWWW W.WWWWW",
+                "W...................W",
+                "WWWWW.W WWWWW W.WWWWW",
+                "W.....W       W.....W",
+                "WWWWW.W WWWWW W.WWWWW",
+                "W...................W",
+                "W.WWW.W.WWWWW.W.WWW.W",
+                "W.....W...W...W.....W",
+                "WWW.W.WWW.WWW.W.WWW.W",
+                "W.....W...W...W.....W",
+                "W.WWWWWWW.W.WWWWWWW.W",
+                "W...................W",
+                "WWWWWWWWWWWWWWWWWWWWW"
             ];
 
-            layout.forEach((row, rowIndex) => {
-                row.split('').forEach((cell, cellIndex) => {
-                    const mazeCell = document.createElement('div');
-                    if (cell === 'W') {
-                        mazeCell.className = 'wall';
-                    } else {
-                        mazeCell.className = '';
+            layout.forEach((row, i) => {
+                for (let j = 0; j < row.length; j++) {
+                    const cell = document.createElement('div');
+                    cell.style.width = "15px";
+                    cell.style.height = "15px";
+                    cell.style.left = `${j * 15}px`;
+                    cell.style.top = `${i * 15}px`;
+                    switch(row[j]) {
+                        case 'W':
+                            cell.className = 'wall';
+                            break;
+                        case '.':
+                            // Optionally add dots or other elements
+                            break;
                     }
-                    maze.appendChild(mazeCell);
-                });
+                    maze.appendChild(cell);
+                }
             });
         }
 
@@ -412,13 +172,13 @@
             const maze = document.getElementById('maze');
             const mazeRect = maze.getBoundingClientRect();
             const charRect = character.getBoundingClientRect();
-
+            
             const maxX = mazeRect.width - charRect.width;
             const maxY = mazeRect.height - charRect.height;
-
+            
             const newX = Math.floor(Math.random() * maxX);
             const newY = Math.floor(Math.random() * maxY);
-
+            
             character.style.left = `${newX}px`;
             character.style.top = `${newY}px`;
         }
@@ -426,12 +186,20 @@
         function startGame() {
             const pacman = document.getElementById('pacman');
             const ghosts = document.querySelectorAll('.ghost');
-
+            
             setInterval(() => moveCharacter(pacman), 1000);
             ghosts.forEach(ghost => {
                 setInterval(() => moveCharacter(ghost), 1500);
             });
         }
+
+        window.onload = function() {
+            initializeAuth0();
+            handleAuthentication();
+            document.getElementById('loginButton').addEventListener('click', login);
+            createMaze();
+            startGame();
+        };
     </script>
 </body>
 </html>
