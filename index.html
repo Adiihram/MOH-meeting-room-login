@@ -19,7 +19,7 @@
     <h1>Meeting Room Booking</h1>
     
     <!-- Calendar element with added inline styles for visibility -->
-    <div id="calendar" style="width: 100%; height: 600px; border: 1px solid #ccc;"></div>
+    <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
 
     <!-- Authentication buttons -->
     <button id="login" onclick="login()">Login</button>
@@ -30,6 +30,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
             authDomain: "moh-meeting-room-booking.firebaseapp.com",
+            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app", // Use the correct database URL for your region
             projectId: "moh-meeting-room-booking",
             storageBucket: "moh-meeting-room-booking.appspot.com",
             messagingSenderId: "629503206549",
@@ -60,6 +61,7 @@
             auth0.logout({
                 returnTo: window.location.href
             });
+            document.getElementById('calendar').style.display = 'none'; // Hide the calendar on logout
         }
 
         function handleAuthentication() {
@@ -101,6 +103,7 @@
             }
 
             var calendarEl = document.getElementById('calendar');
+            calendarEl.style.display = 'block'; // Show the calendar after login
             console.log('Calendar element:', calendarEl);
 
             // Fetch events from Realtime Database
@@ -137,10 +140,12 @@
         });
     </script>
 </body>
-</html>          
-         
-          
+</html>            
+     
+      
 
+ 
+ 
               
           
                
