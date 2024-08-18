@@ -117,10 +117,9 @@
                 console.log('Events array:', events);
 
                 var calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
+                    initialView: 'timeGridWeek', // Use timeGridWeek for time selection
                     events: events,
                     selectable: true,
-                    selectHelper: true,
                     select: function(info) {
                         console.log('Selected time range:', info.startStr, 'to', info.endStr);
 
@@ -194,8 +193,4 @@
         });
     </script>
 </body>
-</html> 
-        
-
-          
-               
+</html>               
