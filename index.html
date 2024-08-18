@@ -13,15 +13,18 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <div id='calendar'></div>
+    <!-- Calendar element where FullCalendar will be rendered -->
+    <div id="calendar"></div>
+
+    <!-- Authentication buttons -->
     <button id="login" onclick="login()">Login</button>
     <button id="logout" onclick="logout()" style="display:none;">Logout</button>
 
     <script>
         var auth0 = new auth0.WebAuth({
-            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',  // Your Auth0 domain
-            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',  // Your Auth0 client ID
-            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',  // Your redirect URI
+            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
+            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
+            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',
             responseType: 'token id_token',
             scope: 'openid profile email'
         });
@@ -87,75 +90,75 @@
                     Authorization: 'Bearer ' + localStorage.getItem('access_token')
                 }
             })
-                .then(response => response.json())
-                .then(events => {
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        selectable: true,
-                        editable: true, // Allows events to be edited or deleted
-                        events: events,  // Load events fetched from the backend
-                        select: function(info) {
-                            var title = prompt('Enter Meeting Title:');
-                            
-                            // Create a dropdown for department selection
-                            if (title) {
-                                var department = promptDepartmentSelection(departments);
-                                if (department) {
-                                    var event = {
-                                        title: `${title} - ${department}`,
-                                        start: info.startStr,
-                                        end: info.endStr,
-                                        allDay: info.allDay,
-                                    };
+            .then(response => response.json())
+            .then(events => {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    selectable: true,
+                    editable: true, // Allows events to be edited or deleted
+                    events: events,  // Load events fetched from the backend
+                    select: function(info) {
+                        var title = prompt('Enter Meeting Title:');
+                        
+                        // Create a dropdown for department selection
+                        if (title) {
+                            var department = promptDepartmentSelection(departments);
+                            if (department) {
+                                var event = {
+                                    title: `${title} - ${department}`,
+                                    start: info.startStr,
+                                    end: info.endStr,
+                                    allDay: info.allDay,
+                                };
 
-                                    // Send the event data to your backend
-                                    fetch('/api/add-event', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            Authorization: 'Bearer ' + localStorage.getItem('access_token')
-                                        },
-                                        body: JSON.stringify(event)
-                                    }).then(response => response.json())
-                                        .then(data => {
-                                            if (data.success) {
-                                                calendar.addEvent(event);
-                                                alert('Meeting booked on ' + info.startStr);
-                                            } else {
-                                                alert('Error booking meeting');
-                                            }
-                                        });
-                                }
-                            }
-                            calendar.unselect();
-                        },
-                        eventClick: function(info) {
-                            if (confirm("Do you want to cancel this booking?")) {
-                                var bookingId = info.event.extendedProps.bookingId;
-
-                                // Send delete request to your backend
-                                fetch('/api/delete-event', {
+                                // Send the event data to your backend
+                                fetch('/api/add-event', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
                                         Authorization: 'Bearer ' + localStorage.getItem('access_token')
                                     },
-                                    body: JSON.stringify({ bookingId: bookingId })
+                                    body: JSON.stringify(event)
                                 }).then(response => response.json())
                                     .then(data => {
                                         if (data.success) {
-                                            info.event.remove(); // Remove event from calendar
-                                            alert('Booking cancelled.');
+                                            calendar.addEvent(event);
+                                            alert('Meeting booked on ' + info.startStr);
                                         } else {
-                                            alert('Failed to cancel booking: ' + data.message);
+                                            alert('Error booking meeting');
                                         }
                                     });
                             }
                         }
-                    });
+                        calendar.unselect();
+                    },
+                    eventClick: function(info) {
+                        if (confirm("Do you want to cancel this booking?")) {
+                            var bookingId = info.event.extendedProps.bookingId;
 
-                    calendar.render();
+                            // Send delete request to your backend
+                            fetch('/api/delete-event', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: 'Bearer ' + localStorage.getItem('access_token')
+                                },
+                                body: JSON.stringify({ bookingId: bookingId })
+                            }).then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        info.event.remove(); // Remove event from calendar
+                                        alert('Booking cancelled.');
+                                    } else {
+                                        alert('Failed to cancel booking: ' + data.message);
+                                    }
+                                });
+                        }
+                    }
                 });
+
+                calendar.render();
+            });
 
             function promptDepartmentSelection(departments) {
                 var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
@@ -173,4 +176,11 @@
         }
     </script>
 </body>
-</html>   
+</html>
+
+
+                                   
+                            
+
+                
+  
