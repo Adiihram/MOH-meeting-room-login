@@ -8,6 +8,10 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <!-- Auth0 JavaScript -->
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
 </head>
@@ -22,6 +26,24 @@
     <button id="logout" onclick="logout()" style="display:none;">Logout</button>
 
     <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+            authDomain: "moh-meeting-room-booking.firebaseapp.com",
+            projectId: "moh-meeting-room-booking",
+            storageBucket: "moh-meeting-room-booking.appspot.com",
+            messagingSenderId: "629503206549",
+            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+            measurementId: "G-MDSDN8ZS5F"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Realtime Database
+        var db = firebase.database();
+
+        // Auth0 Configuration
         var auth0 = new auth0.WebAuth({
             domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
             clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
@@ -81,109 +103,25 @@
             var calendarEl = document.getElementById('calendar');
             console.log('Calendar element:', calendarEl);
 
-            var departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation',
-                // Add other departments as needed
-            ];
+            // Fetch events from Realtime Database
+            db.ref('events').once('value').then(function(snapshot) {
+                var events = [];
+                snapshot.forEach(function(childSnapshot) {
+                    events.push(childSnapshot.val());
+                });
 
-            // Fetch existing events from the backend
-            fetch('/api/events', {
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem('access_token')
-                }
-            })
-            .then(response => response.json())
-            .then(events => {
                 console.log('Events fetched:', events);
+
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
-                    selectable: true,
-                    editable: true, // Allows events to be edited or deleted
-                    events: events,  // Load events fetched from the backend
-                    select: function(info) {
-                        var title = prompt('Enter Meeting Title:');
-                        console.log('New event title:', title);
-                        
-                        // Create a dropdown for department selection
-                        if (title) {
-                            var department = promptDepartmentSelection(departments);
-                            if (department) {
-                                var event = {
-                                    title: `${title} - ${department}`,
-                                    start: info.startStr,
-                                    end: info.endStr,
-                                    allDay: info.allDay,
-                                };
-
-                                console.log('New event:', event);
-
-                                // Send the event data to your backend
-                                fetch('/api/add-event', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        Authorization: 'Bearer ' + localStorage.getItem('access_token')
-                                    },
-                                    body: JSON.stringify(event)
-                                }).then(response => response.json())
-                                    .then(data => {
-                                        console.log('Event added response:', data);
-                                        if (data.success) {
-                                            calendar.addEvent(event);
-                                            alert('Meeting booked on ' + info.startStr);
-                                        } else {
-                                            alert('Error booking meeting');
-                                        }
-                                    });
-                            }
-                        }
-                        calendar.unselect();
-                    },
-                    eventClick: function(info) {
-                        if (confirm("Do you want to cancel this booking?")) {
-                            var bookingId = info.event.extendedProps.bookingId;
-                            console.log('Cancel booking ID:', bookingId);
-
-                            // Send delete request to your backend
-                            fetch('/api/delete-event', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    Authorization: 'Bearer ' + localStorage.getItem('access_token')
-                                },
-                                body: JSON.stringify({ bookingId: bookingId })
-                            }).then(response => response.json())
-                                .then(data => {
-                                    console.log('Event deletion response:', data);
-                                    if (data.success) {
-                                        info.event.remove(); // Remove event from calendar
-                                        alert('Booking cancelled.');
-                                    } else {
-                                        alert('Failed to cancel booking: ' + data.message);
-                                    }
-                                });
-                        }
-                    }
+                    events: events
                 });
 
                 calendar.render();
-                console.log('Calendar rendered');
-            })
-            .catch(error => {
+                console.log('Calendar rendered with events');
+            }).catch(function(error) {
                 console.error('Error fetching events:', error);
             });
-
-            function promptDepartmentSelection(departments) {
-                var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
-                var selection = prompt(`Select Department:\n${departmentList}`);
-                var index = parseInt(selection) - 1;
-                console.log('Selected department:', departments[index]);
-                return departments[index] || null;
-            }
         }
 
         // Ensure the DOM is fully loaded before initializing FullCalendar
@@ -198,7 +136,7 @@
         });
     </script>
 </body>
-</html>              
-
-                           
-              
+</html>       
+                       
+                              
+           
