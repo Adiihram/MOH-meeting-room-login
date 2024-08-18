@@ -13,8 +13,9 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <!-- Calendar element where FullCalendar will be rendered -->
-    <div id="calendar"></div>
+    
+    <!-- Calendar element with added inline styles for visibility -->
+    <div id="calendar" style="width: 100%; height: 600px; border: 1px solid #ccc;"></div>
 
     <!-- Authentication buttons -->
     <button id="login" onclick="login()">Login</button>
@@ -48,7 +49,7 @@
                     document.getElementById('logout').style.display = 'block';
                     loadCalendar();
                 } else if (err) {
-                    console.log(err);
+                    console.log('Authentication error:', err);
                     alert('Error: ' + err.errorDescription);
                 } else {
                     document.getElementById('login').style.display = 'block';
@@ -61,11 +62,14 @@
             localStorage.setItem('access_token', authResult.accessToken);
             localStorage.setItem('id_token', authResult.idToken);
             localStorage.setItem('expires_at', expiresAt);
+            console.log('Session set with authResult:', authResult);
         }
 
         function isAuthenticated() {
             var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
-            return new Date().getTime() < expiresAt;
+            var isAuth = new Date().getTime() < expiresAt;
+            console.log('Is authenticated:', isAuth);
+            return isAuth;
         }
 
         function loadCalendar() {
@@ -75,6 +79,8 @@
             }
 
             var calendarEl = document.getElementById('calendar');
+            console.log('Calendar element:', calendarEl);
+
             var departments = [
                 'Department of Medical Services',
                 'Department of Public Health',
@@ -92,6 +98,7 @@
             })
             .then(response => response.json())
             .then(events => {
+                console.log('Events fetched:', events);
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     selectable: true,
@@ -99,6 +106,7 @@
                     events: events,  // Load events fetched from the backend
                     select: function(info) {
                         var title = prompt('Enter Meeting Title:');
+                        console.log('New event title:', title);
                         
                         // Create a dropdown for department selection
                         if (title) {
@@ -111,6 +119,8 @@
                                     allDay: info.allDay,
                                 };
 
+                                console.log('New event:', event);
+
                                 // Send the event data to your backend
                                 fetch('/api/add-event', {
                                     method: 'POST',
@@ -121,6 +131,7 @@
                                     body: JSON.stringify(event)
                                 }).then(response => response.json())
                                     .then(data => {
+                                        console.log('Event added response:', data);
                                         if (data.success) {
                                             calendar.addEvent(event);
                                             alert('Meeting booked on ' + info.startStr);
@@ -135,6 +146,7 @@
                     eventClick: function(info) {
                         if (confirm("Do you want to cancel this booking?")) {
                             var bookingId = info.event.extendedProps.bookingId;
+                            console.log('Cancel booking ID:', bookingId);
 
                             // Send delete request to your backend
                             fetch('/api/delete-event', {
@@ -146,6 +158,7 @@
                                 body: JSON.stringify({ bookingId: bookingId })
                             }).then(response => response.json())
                                 .then(data => {
+                                    console.log('Event deletion response:', data);
                                     if (data.success) {
                                         info.event.remove(); // Remove event from calendar
                                         alert('Booking cancelled.');
@@ -158,18 +171,24 @@
                 });
 
                 calendar.render();
+                console.log('Calendar rendered');
+            })
+            .catch(error => {
+                console.error('Error fetching events:', error);
             });
 
             function promptDepartmentSelection(departments) {
                 var departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
                 var selection = prompt(`Select Department:\n${departmentList}`);
                 var index = parseInt(selection) - 1;
+                console.log('Selected department:', departments[index]);
                 return departments[index] || null;
             }
         }
 
         // Ensure the DOM is fully loaded before initializing FullCalendar
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
             handleAuthentication();
             if (isAuthenticated()) {
                 document.getElementById('login').style.display = 'none';
@@ -179,4 +198,7 @@
         });
     </script>
 </body>
-</html>            
+</html>              
+
+                           
+              
