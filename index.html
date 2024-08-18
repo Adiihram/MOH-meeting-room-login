@@ -118,7 +118,33 @@
 
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
-                    events: events
+                    events: events,
+                    selectable: true,
+                    select: function(info) {
+                        console.log('Selected time range:', info.startStr, 'to', info.endStr);
+
+                        var title = prompt('Enter Meeting Title:');
+                        if (title) {
+                            var department = prompt('Enter Department:');
+                            var newEvent = {
+                                title: title + ' - ' + department,
+                                start: info.startStr,
+                                end: info.endStr,
+                                allDay: info.allDay
+                            };
+
+                            // Save the event to Firebase
+                            db.ref('events').push(newEvent).then(function() {
+                                calendar.addEvent(newEvent);
+                                console.log('Event added:', newEvent);
+                                alert('Meeting booked successfully.');
+                            }).catch(function(error) {
+                                console.error('Error saving event:', error);
+                                alert('Failed to book meeting.');
+                            });
+                        }
+                        calendar.unselect();
+                    }
                 });
 
                 calendar.render();
@@ -140,12 +166,9 @@
         });
     </script>
 </body>
-</html>            
-     
-      
+</html>      
+   
 
  
- 
-              
           
                
