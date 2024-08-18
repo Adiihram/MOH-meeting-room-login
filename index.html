@@ -8,8 +8,8 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <!-- Auth0 JavaScript -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <!-- Auth0 SPA SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.20/auth0-spa-js.production.js"></script>
     <!-- Firebase App (the core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
@@ -47,7 +47,7 @@
         }
 
         async function initializeAuth0() {
-            auth0Client = await createAuth0Client({
+            auth0Client = await auth0.createAuth0Client({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
                 clientId: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
                 authorizationParams: {
@@ -99,15 +99,15 @@
         }
 
         function loadCalendar() {
-            // ... Your existing loadCalendar function ...
+            // Your existing loadCalendar function implementation
         }
 
         function selectDepartment() {
-            // ... Your existing selectDepartment function ...
+            // Your existing selectDepartment function implementation
         }
 
         function getDepartmentColor(department) {
-            // ... Your existing getDepartmentColor function ...
+            // Your existing getDepartmentColor function implementation
         }
     </script>
 </body>
