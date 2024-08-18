@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.0</title>
+    <title>Meeting Room Booking - Version 2.1</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -35,11 +35,14 @@
             border: none;
             cursor: pointer;
         }
+        .inline-form button.cancel {
+            background-color: #dc3545;
+        }
     </style>
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 2.0</p> <!-- Displaying the version number on the page -->
+    <p>Version: 2.1</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -49,6 +52,7 @@
     <script>
         var auth0Client = null;
         let db = null;
+        let activeForm = null;
 
         const firebaseConfig = {
             apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
@@ -183,19 +187,21 @@
                     selectable: true,
                     selectHelper: true, // Allows the user to see the selected range
                     select: function(info) {
+                        if (activeForm) {
+                            activeForm.remove(); // Remove any existing form
+                        }
+
                         // Create and display an inline form at the selected position
-                        var form = createInlineForm(info.startStr, info.endStr, userId, calendar, info.jsEvent.pageX, info.jsEvent.pageY);
-                        document.body.appendChild(form);
+                        activeForm = createInlineForm(info.startStr, info.endStr, userId, calendar, info.jsEvent.pageX, info.jsEvent.pageY);
+                        document.body.appendChild(activeForm);
                     },
                     eventClick: function(info) {
                         if (info.event.extendedProps.userId === userId) {
-                            var action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                            if (action === 'delete') {
-                                if (confirm("Are you sure you want to delete this booking?")) {
-                                    info.event.remove();
-                                    db.ref('events/' + info.event.id).remove();
-                                }
+                            if (activeForm) {
+                                activeForm.remove(); // Remove any existing form
                             }
+                            activeForm = createInlineEditDeleteForm(info.event, calendar, info.jsEvent.pageX, info.jsEvent.pageY);
+                            document.body.appendChild(activeForm);
                         } else {
                             alert("You are not authorized to edit or delete this booking.");
                         }
@@ -244,6 +250,17 @@
             saveButton.innerText = 'Save';
             formContainer.appendChild(saveButton);
 
+            // Create the cancel button
+            var cancelButton = document.createElement('button');
+            cancelButton.innerText = 'Cancel';
+            cancelButton.className = 'cancel';
+            formContainer.appendChild(cancelButton);
+
+            cancelButton.addEventListener('click', function() {
+                formContainer.remove(); // Remove the form without saving
+                activeForm = null;
+            });
+
             saveButton.addEventListener('click', function() {
                 var title = input.value;
                 var department = select.value;
@@ -269,6 +286,79 @@
                     });
                 }
                 formContainer.remove(); // Remove the form after saving
+                activeForm = null;
+            });
+
+            return formContainer;
+        }
+
+        function createInlineEditDeleteForm(event, calendar, posX, posY) {
+            // Create the form container
+            var formContainer = document.createElement('div');
+            formContainer.className = 'inline-form';
+            formContainer.style.left = posX + 'px';
+            formContainer.style.top = posY + 'px';
+
+            // Create the input field for the event title
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.value = event.title;
+            formContainer.appendChild(input);
+
+            // Create the dropdown for department selection
+            var select = document.createElement('select');
+            var departments = [
+                'Department of Medical Services',
+                'Department of Public Health',
+                'Department of Health Technology',
+                'Department of Research and Development',
+                'Department of Health Regulation'
+            ];
+            departments.forEach(function(dept) {
+                var option = document.createElement('option');
+                option.value = dept;
+                option.text = dept;
+                if (event.title.includes(dept)) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            formContainer.appendChild(select);
+
+            // Create the save button
+            var saveButton = document.createElement('button');
+            saveButton.innerText = 'Save';
+            formContainer.appendChild(saveButton);
+
+            // Create the delete button
+            var deleteButton = document.createElement('button');
+            deleteButton.innerText = 'Delete';
+            deleteButton.className = 'cancel';
+            formContainer.appendChild(deleteButton);
+
+            saveButton.addEventListener('click', function() {
+                var newTitle = input.value;
+                var newDepartment = select.value;
+                if (newTitle && newDepartment) {
+                    event.setProp('title', newTitle + ' - ' + newDepartment);
+                    event.setProp('color', getDepartmentColor(newDepartment));
+                    db.ref('events/' + event.id).update({
+                        title: newTitle,
+                        department: newDepartment,
+                        color: getDepartmentColor(newDepartment)
+                    });
+                }
+                formContainer.remove(); // Remove the form after saving
+                activeForm = null;
+            });
+
+            deleteButton.addEventListener('click', function() {
+                if (confirm("Are you sure you want to delete this booking?")) {
+                    event.remove();
+                    db.ref('events/' + event.id).remove();
+                }
+                formContainer.remove(); // Remove the form after deleting
+                activeForm = null;
             });
 
             return formContainer;
