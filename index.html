@@ -1,260 +1,104 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking</title>
-    <!-- FullCalendar CSS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <!-- FullCalendar JavaScript -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <!-- Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <!-- Auth0 JavaScript -->
-    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
-</head>
-<body>
-    <h1>Meeting Room Booking</h1>
-    
-    <!-- Print button -->
-    <button id="printButton" style="display:none;" onclick="printCalendar()">Print Calendar</button>
+<script>
+    console.log("Script Loaded");
 
-    <!-- Calendar element, hidden by default -->
-    <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+        authDomain: "moh-meeting-room-booking.firebaseapp.com",
+        databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "moh-meeting-room-booking",
+        storageBucket: "moh-meeting-room-booking.appspot.com",
+        messagingSenderId: "629503206549",
+        appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+        measurementId: "G-MDSDN8ZS5F"
+    };
 
-    <!-- Authentication buttons -->
-    <button id="login" onclick="login()">Login</button>
-    <button id="logout" onclick="logout()" style="display:none;">Logout</button>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
 
-    <script>
-        console.log("Script Loaded");
+    // Initialize Realtime Database
+    const db = firebase.database();
+    console.log("Firebase Initialized");
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
-            authDomain: "moh-meeting-room-booking.firebaseapp.com",
-            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "moh-meeting-room-booking",
-            storageBucket: "moh-meeting-room-booking.appspot.com",
-            messagingSenderId: "629503206549",
-            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
-            measurementId: "G-MDSDN8ZS5F"
-        };
+    // Auth0 Configuration
+    const auth0 = new auth0.WebAuth({
+        domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
+        clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
+        redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',
+        responseType: 'token id_token',
+        scope: 'openid profile email'
+    });
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+    // Define login and logout functions in the global scope
+    window.login = function() {
+        console.log("Login button clicked");
+        auth0.authorize();
+    }
 
-        // Initialize Realtime Database
-        const db = firebase.database();
-        console.log("Firebase Initialized");
-
-        // Auth0 Configuration
-        const auth0 = new auth0.WebAuth({
-            domain: 'dev-tpwyh6hlgc15eq8h.us.auth0.com',
-            clientID: 'cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9',
-            redirectUri: 'https://adiihram.github.io/MOH-meeting-room-login/',
-            responseType: 'token id_token',
-            scope: 'openid profile email'
+    window.logout = function() {
+        console.log("Logout button clicked");
+        auth0.logout({
+            returnTo: window.location.href
         });
+        document.getElementById('calendar').style.display = 'none';
+        document.getElementById('printButton').style.display = 'none';
+    }
 
-        function login() {
-            console.log("Login button clicked");
-            auth0.authorize();
-        }
-
-        function logout() {
-            console.log("Logout button clicked");
-            auth0.logout({
-                returnTo: window.location.href
-            });
-            document.getElementById('calendar').style.display = 'none';
-            document.getElementById('printButton').style.display = 'none';
-        }
-
-        function handleAuthentication() {
-            console.log("Handling Authentication");
-            auth0.parseHash(function(err, authResult) {
-                if (authResult && authResult.accessToken && authResult.idToken) {
-                    console.log("Authentication successful");
-                    window.location.hash = '';
-                    setSession(authResult);
-                    document.getElementById('login').style.display = 'none';
-                    document.getElementById('logout').style.display = 'block';
-                    document.getElementById('printButton').style.display = 'block';
-                    loadCalendar(authResult.idTokenPayload.sub);
-                } else if (err) {
-                    console.log('Authentication error:', err);
-                    alert('Error: ' + err.errorDescription);
-                } else {
-                    console.log("Authentication failed");
-                    document.getElementById('login').style.display = 'block';
-                }
-            });
-        }
-
-        function setSession(authResult) {
-            console.log("Setting session");
-            const expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
-            localStorage.setItem('access_token', authResult.accessToken);
-            localStorage.setItem('id_token', authResult.idToken);
-            localStorage.setItem('expires_at', expiresAt);
-            console.log('Session set with authResult:', authResult);
-        }
-
-        function isAuthenticated() {
-            console.log("Checking authentication status");
-            const expiresAt = JSON.parse(localStorage.getItem('expires_at'));
-            const isAuth = new Date().getTime() < expiresAt;
-            console.log('Is authenticated:', isAuth);
-            return isAuth;
-        }
-
-        function selectDepartment() {
-            const departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation'
-            ];
-
-            const departmentList = departments.map((dept, index) => `${index + 1}. ${dept}`).join('\n');
-            const selection = prompt('Select Department:\n' + departmentList);
-            const selectedIndex = parseInt(selection) - 1;
-
-            if (selectedIndex >= 0 && selectedIndex < departments.length) {
-                return departments[selectedIndex];
-            } else {
-                alert('Invalid selection. Please try again.');
-                return null;
-            }
-        }
-
-        function getDepartmentColor(department) {
-            const departmentColors = {
-                'Department of Medical Services': 'blue',
-                'Department of Public Health': 'green',
-                'Department of Health Technology': 'red',
-                'Department of Research and Development': 'orange',
-                'Department of Health Regulation': 'purple'
-            };
-
-            return departmentColors[department] || 'gray';
-        }
-
-        function printCalendar() {
-            window.print();
-        }
-
-        function loadCalendar(userId) {
-            if (!isAuthenticated()) {
-                login();
-                return;
-            }
-
-            console.log("Loading calendar for user:", userId);
-            const calendarEl = document.getElementById('calendar');
-            calendarEl.style.display = 'block';
-
-            db.ref('events').once('value').then(function(snapshot) {
-                const events = [];
-                snapshot.forEach(function(childSnapshot) {
-                    const event = childSnapshot.val();
-                    event.id = childSnapshot.key;
-                    console.log('Fetched event:', event);
-                    events.push(event);
-                });
-
-                console.log('Events array:', events);
-
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'timeGridWeek',
-                    events: events,
-                    selectable: true,
-                    selectHelper: true,
-                    select: function(info) {
-                        console.log('Selected time range:', info.startStr, 'to', info.endStr);
-
-                        const title = prompt('Enter Meeting Title:');
-                        if (title) {
-                            const department = selectDepartment();
-                            if (department) {
-                                const newEvent = {
-                                    title: title + ' - ' + department,
-                                    start: info.startStr,
-                                    end: info.endStr,
-                                    allDay: false,
-                                    userId: userId,
-                                    color: getDepartmentColor(department)
-                                };
-
-                                db.ref('events').push(newEvent).then(function(ref) {
-                                    newEvent.id = ref.key;
-                                    calendar.addEvent(newEvent);
-                                    console.log('Event added:', newEvent);
-                                    alert('Meeting booked successfully.');
-                                }).catch(function(error) {
-                                    console.error('Error saving event:', error);
-                                    alert('Failed to book meeting.');
-                                });
-                            }
-                        }
-                        calendar.unselect();
-                    },
-                    eventClick: function(info) {
-                        if (info.event.extendedProps.userId === userId) {
-                            const action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                            if (action === 'edit') {
-                                const newTitle = prompt('Enter new meeting title:', info.event.title);
-                                if (newTitle) {
-                                    const newDepartment = selectDepartment();
-                                    if (newDepartment) {
-                                        info.event.setProp('title', newTitle + ' - ' + newDepartment);
-                                        info.event.setProp('color', getDepartmentColor(newDepartment));
-                                        db.ref('events/' + info.event.id).update({
-                                            title: newTitle,
-                                            department: newDepartment,
-                                            color: getDepartmentColor(newDepartment)
-                                        });
-                                    }
-                                }
-                            } else if (action === 'delete') {
-                                if (confirm("Are you sure you want to delete this booking?")) {
-                                    info.event.remove();
-                                    db.ref('events/' + info.event.id).remove();
-                                }
-                            }
-                        } else {
-                            alert("You are not authorized to edit or delete this booking.");
-                        }
-                    }
-                });
-
-                calendar.render();
-                console.log("Calendar rendered with events:", events);
-            }).catch(function(error) {
-                console.error('Error fetching events:', error);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded');
-            
-            handleAuthentication();
-            
-            if (isAuthenticated()) {
+    // Rest of your functions...
+    function handleAuthentication() {
+        console.log("Handling Authentication");
+        auth0.parseHash(function(err, authResult) {
+            if (authResult && authResult.accessToken && authResult.idToken) {
+                console.log("Authentication successful");
+                window.location.hash = '';
+                setSession(authResult);
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('logout').style.display = 'block';
                 document.getElementById('printButton').style.display = 'block';
-                loadCalendar(localStorage.getItem('id_token'));
+                loadCalendar(authResult.idTokenPayload.sub);
+            } else if (err) {
+                console.log('Authentication error:', err);
+                alert('Error: ' + err.errorDescription);
             } else {
-                console.log('User is not authenticated, showing login button.');
-                document.getElementById('calendar').style.display = 'none';
+                console.log("Authentication failed");
                 document.getElementById('login').style.display = 'block';
             }
         });
-    </script>
-</body>
-</html>
+    }
+
+    function setSession(authResult) {
+        console.log("Setting session");
+        const expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
+        localStorage.setItem('access_token', authResult.accessToken);
+        localStorage.setItem('id_token', authResult.idToken);
+        localStorage.setItem('expires_at', expiresAt);
+        console.log('Session set with authResult:', authResult);
+    }
+
+    function isAuthenticated() {
+        console.log("Checking authentication status");
+        const expiresAt = JSON.parse(localStorage.getItem('expires_at'));
+        const isAuth = new Date().getTime() < expiresAt;
+        console.log('Is authenticated:', isAuth);
+        return isAuth;
+    }
+
+    // ... (rest of your functions)
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded');
+        
+        handleAuthentication();
+        
+        if (isAuthenticated()) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('logout').style.display = 'block';
+            document.getElementById('printButton').style.display = 'block';
+            loadCalendar(localStorage.getItem('id_token'));
+        } else {
+            console.log('User is not authenticated, showing login button.');
+            document.getElementById('calendar').style.display = 'none';
+            document.getElementById('login').style.display = 'block';
+        }
+    });
+</script>
