@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.7</title>
+    <title>Meeting Room Booking - Version 2.8</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -37,6 +37,7 @@
             margin-bottom: 20px;
             font-size: 24px;
             text-shadow: 0 0 5px #0f0;
+            white-space: pre;
         }
         .login-container button {
             padding: 10px 20px;
@@ -60,9 +61,11 @@
             margin: 20px auto;
             position: relative;
             background-color: #000;
+            display: grid;
+            grid-template-columns: repeat(20, 15px);
+            grid-template-rows: repeat(20, 15px);
         }
         .wall {
-            position: absolute;
             background-color: #0f0;
         }
         #pacman, .ghost {
@@ -106,13 +109,13 @@
 </head>
 <body>
     <div id="login-section" class="login-container">
-        <h1>DPP Meeting Room</h1>
-        <div id="maze">
-            <div id="pacman"></div>
-            <div class="ghost" id="ghost1"></div>
-            <div class="ghost" id="ghost2"></div>
-            <div class="ghost" id="ghost3"></div>
-        </div>
+        <h1>
+  ____  ____  ____    __  __  ____  __    ____  ____  __  ____ 
+ (  __)(  __)(_  _)  (  )(  )(_  _)/  \  (  __)(  __)/  \(  __)
+  ) _)  ) _)   )(     )( / (_  )( (  O )  ) _)  ) _)(  O )) _) 
+ (____)(__)   (__)   (__)\____)(__) \__/  (__)  (__)  \__/(__) 
+        </h1>
+        <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
 
@@ -211,6 +214,7 @@
             document.getElementById('loginButton').addEventListener('click', login);
             document.getElementById('logoutButton').addEventListener('click', logout);
             document.getElementById('printButton').addEventListener('click', printCalendar);
+            createMaze(); // Create the maze
             startGame(); // Start the Pac-Man and ghost movement
         };
 
@@ -320,15 +324,6 @@
         }
 
         function selectDepartment() {
-            var departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation'
-                // Add other departments as needed
-            ];
-
             var departmentList = departments.map(function(dept, index) {
                 return (index + 1) + '. ' + dept;
             }).join('\n');
@@ -339,6 +334,11 @@
             if (selectedIndex >= 0 && selectedIndex < departments.length) {
                 return departments[selectedIndex];
             } else {
+                var newDepartment = prompt('Department not listed. Enter your department name:');
+                if (newDepartment) {
+                    departments.push(newDepartment);
+                    return newDepartment;
+                }
                 alert('Invalid selection. Please try again.');
                 return null;
             }
@@ -374,6 +374,40 @@
         }
 
         // Pac-Man and ghosts movement
+        function createMaze() {
+            const maze = document.getElementById('maze');
+            const layout = [
+                "WWWWWWWWWWWWWWWWWWWW",
+                "W........WW........W",
+                "W.WWWW.WW.WW.WWWW.WW",
+                "W.WWWW.WW.WW.WWWW.WW",
+                "W..................W",
+                "W.WW.WWWWWWWW.WWW.WW",
+                "W.WW.WWWWWWWW.WWW.WW",
+                "W........WW........W",
+                "WWWWWWW.WW.WWWWWWWWW",
+                "WWWWWWW.WW.WWWWWWWWW",
+                "WWWWWWW.WW.WWWWWWWWW",
+                "W..................W",
+                "W.WWWW.WW.WW.WWWW.WW",
+                "W.WWWW.WW.WW.WWWW.WW",
+                "W........WW........W",
+                "WWWWWWWWWWWWWWWWWWWW"
+            ];
+
+            layout.forEach((row, rowIndex) => {
+                row.split('').forEach((cell, cellIndex) => {
+                    const mazeCell = document.createElement('div');
+                    if (cell === 'W') {
+                        mazeCell.className = 'wall';
+                    } else {
+                        mazeCell.className = '';
+                    }
+                    maze.appendChild(mazeCell);
+                });
+            });
+        }
+
         function moveCharacter(character) {
             const maze = document.getElementById('maze');
             const mazeRect = maze.getBoundingClientRect();
