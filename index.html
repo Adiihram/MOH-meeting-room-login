@@ -59,6 +59,8 @@
         .wall {
             background-color: #0f0;
             border-radius: 4px;
+            height: 100%;
+            width: 100%;
         }
         #pacman, .ghost {
             width: 18px;
@@ -127,30 +129,30 @@
             auth0Client.authorize();
         }
 
-        // Create Maze with boundaries for Pac-Man and ghosts
+        // Create Maze with connected paths for Pac-Man and ghosts
         function createMaze() {
             const maze = document.getElementById('maze');
             const layout = [
                 "WWWWWWWWWWWWWWWWWWWWWW",
                 "W........W...........W",
-                "W.WWW.WWW.W.WWW.WWW.WW",
+                "W.WWW.WWW.W.WWWWW.WWW.W",
                 "W.............P......W",
-                "W.WWW.W.WWWWW.W.WWW.WW",
-                "W.....W...W...W.....W",
-                "WWWWW.WWW W WWW.WWWWW",
-                "W.W....W.....W....W.W",
+                "W.WWW.WWWWWWW.W.WWWWW.W",
+                "W.....W..............W",
                 "WWWWW.WWWWWWWWWWWW.WWW",
-                "WW....W..W.W.W.W..W..W",
-                "WW.WW.W.WW.W.WW.W.WW.W",
-                "WW....W.W.W.W.W.W....W",
-                "WWWWWWWW.WWWWWWWWWWWWW",
-                "W....W..W...W...W....W",
-                "W.WWWWWWW.W.W.WWWWWWW.",
-                "W...W.....W....W...W.W",
-                "WWW.W.WWWWWWW.W.W.WWWW",
-                "W.....W.....W...W...W",
+                "W...................W",
+                "WWWWWWWWWWWWWWWWWWW.WWW",
+                "W.....W.....W.....W..W",
+                "W.WWW.WWWW.W.WWW.WWW.W",
+                "W.WW.......W....W....W",
                 "W.WWWWWWWWWWWWWWWWWWW.W",
-                "W...........G.......W",
+                "W........W...........W",
+                "W.WWWWWWW.WWWWWWWWWWW.W",
+                "W....................W",
+                "W.WWWWWWWWWWWWWWWWWWWWW",
+                "W....................W",
+                "W.WWWWWWWWWWWWWWWWWWW.W",
+                "W...........G........W",
                 "WWWWWWWWWWWWWWWWWWWWWW"
             ];
 
@@ -179,9 +181,6 @@
 
         function moveCharacter(character) {
             const maze = document.getElementById('maze');
-            const mazeRect = maze.getBoundingClientRect();
-            const charRect = character.getBoundingClientRect();
-
             const currentRow = parseInt(character.style.gridRowStart);
             const currentColumn = parseInt(character.style.gridColumnStart);
 
