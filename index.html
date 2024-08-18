@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.3</title>
+    <title>Meeting Room Booking - Version 2.5</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -42,7 +42,7 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 2.3</p> <!-- Displaying the version number on the page -->
+    <p>Version: 2.5</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -102,8 +102,9 @@
                     document.getElementById('printButton').style.display = 'inline-block';
                     loadCalendar(authResult.idTokenPayload.sub); // Use the sub property as userId
                 } else if (err) {
-                    console.log('Authentication error:', err);
+                    console.error('Authentication error:', err);
                     alert('Error: ' + err.errorDescription);
+                    logError('Authentication error', err);
                 } else {
                     console.log("Authentication failed");
                     document.getElementById('loginButton').style.display = 'block';
@@ -180,15 +181,22 @@
                 var events = [];
                 snapshot.forEach(function(childSnapshot) {
                     var event = childSnapshot.val();
-                    event.id = childSnapshot.key;
-                    console.log('Fetched event:', event);
-                    events.push(event);
+                    if (!event.allDay) { // Exclude all-day events
+                        event.id = childSnapshot.key;
+                        console.log('Fetched event:', event);
+                        events.push(event);
+                    }
                 });
 
                 console.log('Events array:', events);
 
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'timeGridWeek', // Use timeGridWeek for time selection
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'timeGridWeek,timeGridDay' // Remove the all-day row
+                    },
                     events: events,
                     editable: true, // Allows direct input on the calendar
                     selectable: true,
@@ -217,6 +225,10 @@
                 console.log("Calendar rendered with events:", events);
             }).catch(function(error) {
                 console.error('Error fetching events:', error);
+                logError('Error fetching events', error);
+            });
+                console.error('Error fetching events:', error);
+                logError('Error fetching events', error);
             });
         }
 
@@ -242,24 +254,22 @@
             const workEnd = new Date(start);
             workEnd.setHours(16, 30, 0, 0);
 
+            let suggestions = [];
             let newStart = new Date(start.getTime());
             let newEnd = new Date(end.getTime());
-            let suggestion = checkForConflicts(newStart, newEnd, calendar);
 
-            while (suggestion.conflict || newStart < workStart || newEnd > workEnd || !isWorkingDay(newStart)) {
+            // Loop through the day to find free time slots
+            while (newStart < workEnd) {
+                let suggestion = checkForConflicts(newStart, newEnd, calendar);
+                if (!suggestion.conflict && newStart >= workStart && newEnd <= workEnd && isWorkingDay(newStart)) {
+                    suggestions.push({ start: new Date(newStart), end: new Date(newEnd) });
+                }
+
                 newStart = new Date(newStart.getTime() + increment);
                 newEnd = new Date(newEnd.getTime() + increment);
-                suggestion = checkForConflicts(newStart, newEnd, calendar);
-
-                if (newEnd > workEnd) {
-                    // Move to the next working day
-                    newStart = new Date(newStart.setHours(8, 0, 0, 0));
-                    newEnd = new Date(newStart.getTime() + increment);
-                    newStart.setDate(newStart.getDate() + (newStart.getDay() === 5 ? 2 : 1)); // Skip Friday
-                }
             }
 
-            return { start: newStart, end: newEnd };
+            return suggestions;
         }
 
         function isWorkingDay(date) {
@@ -272,9 +282,20 @@
 
             if (conflict) {
                 alert(`Conflict detected with existing event: ${conflictingEvent.title}`);
-                const { start, end } = suggestAlternativeTimes(info.start, info.end, calendar);
-                if (confirm(`Would you like to book the next available slot: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}?`)) {
-                    createEvent(start, end, calendar);
+                const suggestions = suggestAlternativeTimes(info.start, info.end, calendar);
+                if (suggestions.length > 0) {
+                    let suggestionList = "Available time slots:\n";
+                    suggestions.forEach((slot, index) => {
+                        suggestionList += `${index + 1}. ${slot.start.toLocaleTimeString()} - ${slot.end.toLocaleTimeString()}\n`;
+                    });
+
+                    let selection = prompt(suggestionList);
+                    if (selection) {
+                        const selectedSlot = suggestions[parseInt(selection) - 1];
+                        createEvent(selectedSlot.start, selectedSlot.end, calendar);
+                    }
+                } else {
+                    alert("No available slots found for today.");
                 }
             } else {
                 createEvent(info.start, info.end, calendar);
@@ -374,6 +395,7 @@
                         alert('Meeting booked successfully.');
                     }).catch(function(error) {
                         console.error('Error saving event:', error);
+                        logError('Error saving event', error);
                         alert('Failed to book meeting.');
                     });
                 }
@@ -460,6 +482,31 @@
 
             return departmentColors[department] || 'gray'; // Default to gray if no color is specified
         }
+
+        function logError(message, error) {
+            db.ref('logs').push({
+                message: message,
+                error: error.toString(),
+                timestamp: new Date().toISOString()
+            });
+        }
     </script>
 </body>
 </html>
+
+
+      
+
+        
+                    
+                
+
+       
+           
+           
+           
+            
+               
+
+             
+                
