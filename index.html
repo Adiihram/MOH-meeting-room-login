@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 1.1</title>
+    <title>Meeting Room Booking - Version 1.2</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <!-- Auth0 SPA SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.20/auth0-spa-js.production.js"></script>
+    <!-- Auth0 JavaScript -->
+    <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <!-- Firebase App (the core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
@@ -17,7 +17,7 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 1.1</p> <!-- Displaying the version number on the page -->
+    <p>Version: 1.2</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -25,7 +25,7 @@
     <button id="logoutButton" style="display:none;">Logout</button>
 
     <script>
-        let auth0Client = null;
+        var auth0Client = null;
         let db = null;
 
         const firebaseConfig = {
@@ -47,48 +47,81 @@
             console.log("Firebase initialized");
         }
 
-        async function initializeAuth0() {
-            auth0Client = await createAuth0Client({
+        function initializeAuth0() {
+            auth0Client = new auth0.WebAuth({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
-                clientId: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                authorizationParams: {
-                    redirect_uri: window.location.origin
-                }
+                clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
+                redirectUri: window.location.origin,
+                responseType: "token id_token",
+                scope: "openid profile email"
             });
             console.log("Auth0 initialized");
         }
 
-        async function checkAuth() {
-            const isAuthenticated = await auth0Client.isAuthenticated();
-            if (isAuthenticated) {
-                console.log('User is authenticated');
-                document.getElementById('loginButton').style.display = 'none';
-                document.getElementById('logoutButton').style.display = 'inline-block';
-                document.getElementById('printButton').style.display = 'inline-block';
-                loadCalendar();
-            } else {
-                console.log('User is not authenticated');
-                document.getElementById('loginButton').style.display = 'inline-block';
-                document.getElementById('logoutButton').style.display = 'none';
-            }
-        }
-
-        async function login() {
-            await auth0Client.loginWithRedirect();
-        }
-
-        async function logout() {
-            await auth0Client.logout({
-                logoutParams: {
-                    returnTo: window.location.origin
+        function handleAuthentication() {
+            auth0Client.parseHash(function(err, authResult) {
+                if (authResult && authResult.accessToken && authResult.idToken) {
+                    console.log("Authentication successful");
+                    window.location.hash = '';
+                    setSession(authResult);
+                    document.getElementById('loginButton').style.display = 'none';
+                    document.getElementById('logoutButton').style.display = 'inline-block';
+                    document.getElementById('printButton').style.display = 'inline-block';
+                    loadCalendar(authResult.idTokenPayload.sub); // Use the sub property as userId
+                } else if (err) {
+                    console.log('Authentication error:', err);
+                    alert('Error: ' + err.errorDescription);
+                } else {
+                    console.log("Authentication failed");
+                    document.getElementById('loginButton').style.display = 'block';
                 }
             });
         }
 
-        window.onload = async function() {
+        function setSession(authResult) {
+            console.log("Setting session");
+            var expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
+            localStorage.setItem('access_token', authResult.accessToken);
+            localStorage.setItem('id_token', authResult.idToken);
+            localStorage.setItem('expires_at', expiresAt);
+            console.log('Session set with authResult:', authResult);
+        }
+
+        function isAuthenticated() {
+            console.log("Checking authentication status");
+            var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
+            var isAuth = new Date().getTime() < expiresAt;
+            console.log('Is authenticated:', isAuth);
+            return isAuth;
+        }
+
+        function login() {
+            auth0Client.authorize();
+        }
+
+        function logout() {
+            auth0Client.logout({
+                returnTo: window.location.origin
+            });
+            document.getElementById('calendar').style.display = 'none'; // Hide the calendar on logout
+            document.getElementById('printButton').style.display = 'none'; // Hide the print button on logout
+        }
+
+        window.onload = function() {
             initializeFirebase();
-            await initializeAuth0();
-            await checkAuth();
+            initializeAuth0();
+            handleAuthentication();
+
+            if (isAuthenticated()) {
+                document.getElementById('loginButton').style.display = 'none';
+                document.getElementById('logoutButton').style.display = 'inline-block';
+                document.getElementById('printButton').style.display = 'inline-block'; // Show the print button after login
+                loadCalendar(localStorage.getItem('id_token')); // Retrieve the id_token as userId
+            } else {
+                console.log('User is not authenticated, showing login button.');
+                document.getElementById('calendar').style.display = 'none'; // Ensure the calendar is hidden
+                document.getElementById('loginButton').style.display = 'block'; // Show the login button
+            }
 
             document.getElementById('loginButton').addEventListener('click', login);
             document.getElementById('logoutButton').addEventListener('click', logout);
@@ -99,13 +132,13 @@
             window.print();
         }
 
-        function loadCalendar() {
-            if (!auth0Client.isAuthenticated()) {
+        function loadCalendar(userId) {
+            if (!isAuthenticated()) {
                 login();
                 return;
             }
 
-            console.log("Loading calendar");
+            console.log("Loading calendar for user:", userId);
             var calendarEl = document.getElementById('calendar');
             calendarEl.style.display = 'block'; // Show the calendar after login
 
@@ -138,7 +171,7 @@
                                     start: info.startStr,
                                     end: info.endStr,
                                     allDay: false,  // Ensure it's not an all-day event to allow time range
-                                    userId: auth0Client.user.sub, // Use Auth0 user ID
+                                    userId: userId,
                                     color: getDepartmentColor(department) // Assign a color based on department
                                 };
 
@@ -157,7 +190,7 @@
                         calendar.unselect();
                     },
                     eventClick: function(info) {
-                        if (info.event.extendedProps.userId === auth0Client.user.sub) {
+                        if (info.event.extendedProps.userId === userId) {
                             var action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
                             if (action === 'edit') {
                                 var newTitle = prompt('Enter new meeting title:', info.event.title);
