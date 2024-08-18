@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.1</title>
+    <title>Meeting Room Booking - Version 2.2</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -42,7 +42,7 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 2.1</p> <!-- Displaying the version number on the page -->
+    <p>Version: 2.2</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -191,9 +191,7 @@
                             activeForm.remove(); // Remove any existing form
                         }
 
-                        // Create and display an inline form at the selected position
-                        activeForm = createInlineForm(info.startStr, info.endStr, userId, calendar, info.jsEvent.pageX, info.jsEvent.pageY);
-                        document.body.appendChild(activeForm);
+                        handleEventCreation(info, calendar);
                     },
                     eventClick: function(info) {
                         if (info.event.extendedProps.userId === userId) {
@@ -215,7 +213,59 @@
             });
         }
 
-        function createInlineForm(start, end, userId, calendar, posX, posY) {
+        function checkForConflicts(start, end, calendar) {
+            const events = calendar.getEvents();
+            let conflict = false;
+            let conflictingEvent = null;
+
+            events.forEach(event => {
+                if ((start < event.end && end > event.start)) {
+                    conflict = true;
+                    conflictingEvent = event;
+                }
+            });
+
+            return { conflict, conflictingEvent };
+        }
+
+        function suggestAlternativeTimes(start, end, calendar) {
+            const increment = 30 * 60 * 1000; // 30-minute increments
+            let newStart = new Date(start.getTime() + increment);
+            let newEnd = new Date(end.getTime() + increment);
+            let suggestion = checkForConflicts(newStart, newEnd, calendar);
+
+            while (suggestion.conflict) {
+                newStart = new Date(newStart.getTime() + increment);
+                newEnd = new Date(newEnd.getTime() + increment);
+                suggestion = checkForConflicts(newStart, newEnd, calendar);
+            }
+
+            return { start: newStart, end: newEnd };
+        }
+
+        function handleEventCreation(info, calendar) {
+            const { conflict, conflictingEvent } = checkForConflicts(info.start, info.end, calendar);
+
+            if (conflict) {
+                alert(`Conflict detected with existing event: ${conflictingEvent.title}`);
+                const { start, end } = suggestAlternativeTimes(info.start, info.end, calendar);
+                if (confirm(`Would you like to book the next available slot: ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}?`)) {
+                    createEvent(start, end, calendar);
+                }
+            } else {
+                createEvent(info.start, info.end, calendar);
+            }
+        }
+
+        function createEvent(start, end, calendar) {
+            if (activeForm) {
+                activeForm.remove(); // Remove any existing form
+            }
+            activeForm = createInlineForm(start, end, calendar, window.event.pageX, window.event.pageY);
+            document.body.appendChild(activeForm);
+        }
+
+        function createInlineForm(start, end, calendar, posX, posY) {
             // Create the form container
             var formContainer = document.createElement('div');
             formContainer.className = 'inline-form';
@@ -270,7 +320,7 @@
                         start: start,
                         end: end,
                         allDay: false,
-                        userId: userId,
+                        userId: localStorage.getItem('id_token'),
                         color: getDepartmentColor(department)
                     };
 
@@ -378,3 +428,4 @@
     </script>
 </body>
 </html>
+     
