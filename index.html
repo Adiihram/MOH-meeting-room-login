@@ -3,17 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking - Version 2.5</title>
-    <!-- FullCalendar CSS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <!-- FullCalendar JavaScript -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <title>Login - Meeting Room Booking</title>
     <!-- Auth0 JavaScript -->
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <!-- Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body {
             font-family: 'Courier New', monospace;
@@ -35,9 +27,8 @@
         }
         .login-container h1 {
             margin-bottom: 20px;
-            font-size: 36px;
-            color: #00ff00;
-            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 40px #00ff00;
+            font-size: 24px;
+            text-shadow: 0 0 5px #0f0;
         }
         .login-container button {
             padding: 10px 20px;
@@ -55,28 +46,25 @@
             background-color: #0c0;
         }
         #maze {
-            width: 300px;
-            height: 300px;
+            width: 440px;
+            height: 440px;
             border: 2px solid #0f0;
             margin: 20px auto;
             position: relative;
             background-color: #000;
             display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(15, 1fr);
+            grid-template-columns: repeat(22, 1fr);
+            grid-template-rows: repeat(22, 1fr);
         }
         .wall {
             background-color: #0f0;
-            grid-column: span 1;
-            grid-row: span 1;
+            border-radius: 4px;
         }
         #pacman, .ghost {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transition: all 0.3s;
-            grid-column: span 1;
-            grid-row: span 1;
+            width: 18px;
+            height: 18px;
+            position: absolute;
+            transition: all 0.3s ease;
         }
         #pacman {
             background-color: yellow;
@@ -91,17 +79,14 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>DPP Meeting Room</h1>
-        <div id="maze">
-            <div id="pacman"></div>
-            <div class="ghost" id="ghost1"></div>
-            <div class="ghost" id="ghost2"></div>
-            <div class="ghost" id="ghost3"></div>
-        </div>
+        <h1>Meeting Room Booking</h1>
+        <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
     <script>
         var auth0Client = null;
+
+        // Initialize Auth0 for authentication
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
@@ -142,49 +127,100 @@
             auth0Client.authorize();
         }
 
+        // Create Maze with boundaries for Pac-Man and ghosts
+        function createMaze() {
+            const maze = document.getElementById('maze');
+            const layout = [
+                "WWWWWWWWWWWWWWWWWWWWWW",
+                "W........W...........W",
+                "W.WWW.WWW.W.WWW.WWW.WW",
+                "W.............P......W",
+                "W.WWW.W.WWWWW.W.WWW.WW",
+                "W.....W...W...W.....W",
+                "WWWWW.WWW W WWW.WWWWW",
+                "W.W....W.....W....W.W",
+                "WWWWW.WWWWWWWWWWWW.WWW",
+                "WW....W..W.W.W.W..W..W",
+                "WW.WW.W.WW.W.WW.W.WW.W",
+                "WW....W.W.W.W.W.W....W",
+                "WWWWWWWW.WWWWWWWWWWWWW",
+                "W....W..W...W...W....W",
+                "W.WWWWWWW.W.W.WWWWWWW.",
+                "W...W.....W....W...W.W",
+                "WWW.W.WWWWWWW.W.W.WWWW",
+                "W.....W.....W...W...W",
+                "W.WWWWWWWWWWWWWWWWWWW.W",
+                "W...........G.......W",
+                "WWWWWWWWWWWWWWWWWWWWWW"
+            ];
+
+            layout.forEach((row, i) => {
+                for (let j = 0; j < row.length; j++) {
+                    const cell = document.createElement('div');
+                    if (row[j] === 'W') {
+                        cell.className = 'wall';
+                    }
+                    if (row[j] === 'P') {
+                        cell.id = 'pacman';
+                    }
+                    if (row[j] === 'G') {
+                        const ghost = document.createElement('div');
+                        ghost.className = 'ghost';
+                        maze.appendChild(ghost);
+                        ghost.style.gridRowStart = i + 1;
+                        ghost.style.gridColumnStart = j + 1;
+                    }
+                    maze.appendChild(cell);
+                    cell.style.gridRowStart = i + 1;
+                    cell.style.gridColumnStart = j + 1;
+                }
+            });
+        }
+
         function moveCharacter(character) {
             const maze = document.getElementById('maze');
-            const maxX = maze.clientWidth - character.clientWidth;
-            const maxY = maze.clientHeight - character.clientHeight;
-            const newX = Math.floor(Math.random() * maxX);
-            const newY = Math.floor(Math.random() * maxY);
-            character.style.transform = `translate(${newX}px, ${newY}px)`;
+            const mazeRect = maze.getBoundingClientRect();
+            const charRect = character.getBoundingClientRect();
+
+            const currentRow = parseInt(character.style.gridRowStart);
+            const currentColumn = parseInt(character.style.gridColumnStart);
+
+            const possibleMoves = [];
+            const directions = [
+                { x: 0, y: -1 },  // Up
+                { x: 0, y: 1 },   // Down
+                { x: -1, y: 0 },  // Left
+                { x: 1, y: 0 }    // Right
+            ];
+
+            // Check each direction if movement is possible (i.e., no wall)
+            directions.forEach(direction => {
+                const newRow = currentRow + direction.y;
+                const newColumn = currentColumn + direction.x;
+                const nextCell = [...maze.children].find(child =>
+                    parseInt(child.style.gridRowStart) === newRow &&
+                    parseInt(child.style.gridColumnStart) === newColumn
+                );
+
+                if (nextCell && !nextCell.classList.contains('wall')) {
+                    possibleMoves.push({ row: newRow, column: newColumn });
+                }
+            });
+
+            if (possibleMoves.length > 0) {
+                const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                character.style.gridRowStart = move.row;
+                character.style.gridColumnStart = move.column;
+            }
         }
 
         function startGame() {
             const pacman = document.getElementById('pacman');
             const ghosts = document.querySelectorAll('.ghost');
-            
-            setInterval(() => moveCharacter(pacman), 1000);
+
+            setInterval(() => moveCharacter(pacman), 500);
             ghosts.forEach(ghost => {
-                setInterval(() => moveCharacter(ghost), 1500);
-            });
-        }
-
-        function createMaze() {
-            const layout = [
-                "WWWWWWWWWWWWWWW",
-                "W.......W.....W",
-                "W.WWW.W.W.WWW.W",
-                "W.............W",
-                "W.WWW.W.W.WWW.W",
-                "W.....W.......W",
-                "WWWWW.WWWWWWWWW",
-                "W.............W",
-                "WWWWWWWWWWWWWWW"
-            ];
-
-            const maze = document.getElementById('maze');
-            layout.forEach((row, rowIndex) => {
-                row.split('').forEach((cell, cellIndex) => {
-                    if (cell === 'W') {
-                        const wall = document.createElement('div');
-                        wall.classList.add('wall');
-                        wall.style.gridColumnStart = cellIndex + 1;
-                        wall.style.gridRowStart = rowIndex + 1;
-                        maze.appendChild(wall);
-                    }
-                });
+                setInterval(() => moveCharacter(ghost), 700);
             });
         }
 
@@ -193,7 +229,7 @@
             handleAuthentication();
             document.getElementById('loginButton').addEventListener('click', login);
             createMaze(); // Create the Pac-Man maze
-            startGame(); // Start the Pac-Man and Ghosts movement
+            startGame();  // Start the Pac-Man game
         };
     </script>
 </body>
