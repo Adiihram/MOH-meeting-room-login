@@ -49,12 +49,13 @@
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
-                domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
-                clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                redirectUri: window.location.origin,
-                responseType: "token id_token",
-                scope: "openid profile email"
-            });
+    domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
+    clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
+    redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/", // or "http://localhost:3000" if testing locally
+    responseType: "token id_token",
+    scope: "openid profile email"
+});
+           
             console.log("Auth0 initialized");
         }
 
