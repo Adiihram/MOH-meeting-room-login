@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.2</title>
+    <title>Meeting Room Booking - Version 2.3</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -42,7 +42,7 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 2.2</p> <!-- Displaying the version number on the page -->
+    <p>Version: 2.3</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -53,6 +53,13 @@
         var auth0Client = null;
         let db = null;
         let activeForm = null;
+        let departments = [
+            'Department of Medical Services',
+            'Department of Public Health',
+            'Department of Health Technology',
+            'Department of Research and Development',
+            'Department of Health Regulation'
+        ];
 
         const firebaseConfig = {
             apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
@@ -230,17 +237,34 @@
 
         function suggestAlternativeTimes(start, end, calendar) {
             const increment = 30 * 60 * 1000; // 30-minute increments
-            let newStart = new Date(start.getTime() + increment);
-            let newEnd = new Date(end.getTime() + increment);
+            const workStart = new Date(start);
+            workStart.setHours(8, 0, 0, 0);
+            const workEnd = new Date(start);
+            workEnd.setHours(16, 30, 0, 0);
+
+            let newStart = new Date(start.getTime());
+            let newEnd = new Date(end.getTime());
             let suggestion = checkForConflicts(newStart, newEnd, calendar);
 
-            while (suggestion.conflict) {
+            while (suggestion.conflict || newStart < workStart || newEnd > workEnd || !isWorkingDay(newStart)) {
                 newStart = new Date(newStart.getTime() + increment);
                 newEnd = new Date(newEnd.getTime() + increment);
                 suggestion = checkForConflicts(newStart, newEnd, calendar);
+
+                if (newEnd > workEnd) {
+                    // Move to the next working day
+                    newStart = new Date(newStart.setHours(8, 0, 0, 0));
+                    newEnd = new Date(newStart.getTime() + increment);
+                    newStart.setDate(newStart.getDate() + (newStart.getDay() === 5 ? 2 : 1)); // Skip Friday
+                }
             }
 
             return { start: newStart, end: newEnd };
+        }
+
+        function isWorkingDay(date) {
+            const day = date.getDay();
+            return day >= 1 && day <= 4 || day === 6; // Monday to Thursday and Saturday
         }
 
         function handleEventCreation(info, calendar) {
@@ -280,20 +304,33 @@
 
             // Create the dropdown for department selection
             var select = document.createElement('select');
-            var departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation'
-            ];
             departments.forEach(function(dept) {
                 var option = document.createElement('option');
                 option.value = dept;
                 option.text = dept;
                 select.appendChild(option);
             });
+
+            var customOption = document.createElement('option');
+            customOption.value = 'custom';
+            customOption.text = 'Other (Add new department)';
+            select.appendChild(customOption);
+
             formContainer.appendChild(select);
+
+            var customInput = document.createElement('input');
+            customInput.type = 'text';
+            customInput.placeholder = 'Enter new department name';
+            customInput.style.display = 'none';
+            formContainer.appendChild(customInput);
+
+            select.addEventListener('change', function() {
+                if (select.value === 'custom') {
+                    customInput.style.display = 'block';
+                } else {
+                    customInput.style.display = 'none';
+                }
+            });
 
             // Create the save button
             var saveButton = document.createElement('button');
@@ -313,8 +350,13 @@
 
             saveButton.addEventListener('click', function() {
                 var title = input.value;
-                var department = select.value;
+                var department = select.value === 'custom' ? customInput.value : select.value;
                 if (title && department) {
+                    if (select.value === 'custom' && department) {
+                        departments.push(department);
+                        db.ref('departments').push(department); // Save the new department to Firebase
+                    }
+
                     var newEvent = {
                         title: title + ' - ' + department,
                         start: start,
@@ -357,13 +399,6 @@
 
             // Create the dropdown for department selection
             var select = document.createElement('select');
-            var departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation'
-            ];
             departments.forEach(function(dept) {
                 var option = document.createElement('option');
                 option.value = dept;
@@ -428,4 +463,3 @@
     </script>
 </body>
 </html>
-     
