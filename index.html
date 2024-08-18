@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 1.3</title>
+    <title>Meeting Room Booking - Version 2.0</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -14,10 +14,32 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        /* Basic styling for inline form */
+        .inline-form {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 1000;
+        }
+        .inline-form input, .inline-form select {
+            margin: 5px 0;
+            padding: 5px;
+            font-size: 14px;
+        }
+        .inline-form button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 1.3</p> <!-- Displaying the version number on the page -->
+    <p>Version: 2.0</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -161,32 +183,9 @@
                     selectable: true,
                     selectHelper: true, // Allows the user to see the selected range
                     select: function(info) {
-                        var newEvent = {
-                            start: info.startStr,
-                            end: info.endStr,
-                            allDay: false,  // Ensure it's not an all-day event to allow time range
-                            userId: userId
-                        };
-                        // Add a new event with inline editing
-                        calendar.addEvent(newEvent);
-                        calendar.unselect();
-                    },
-                    eventChange: function(info) {
-                        var event = info.event;
-                        var department = selectDepartment(); // Prompt department selection
-                        if (department) {
-                            event.setProp('title', event.title + ' - ' + department);
-                            event.setProp('color', getDepartmentColor(department));
-
-                            // Save or update the event in Firebase
-                            if (!event.id) {
-                                db.ref('events').push(event.toPlainObject()).then(function(ref) {
-                                    event.setProp('id', ref.key);
-                                });
-                            } else {
-                                db.ref('events/' + event.id).set(event.toPlainObject());
-                            }
-                        }
+                        // Create and display an inline form at the selected position
+                        var form = createInlineForm(info.startStr, info.endStr, userId, calendar, info.jsEvent.pageX, info.jsEvent.pageY);
+                        document.body.appendChild(form);
                     },
                     eventClick: function(info) {
                         if (info.event.extendedProps.userId === userId) {
@@ -210,29 +209,69 @@
             });
         }
 
-        function selectDepartment() {
+        function createInlineForm(start, end, userId, calendar, posX, posY) {
+            // Create the form container
+            var formContainer = document.createElement('div');
+            formContainer.className = 'inline-form';
+            formContainer.style.left = posX + 'px';
+            formContainer.style.top = posY + 'px';
+
+            // Create the input field for the event title
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Meeting Title';
+            formContainer.appendChild(input);
+
+            // Create the dropdown for department selection
+            var select = document.createElement('select');
             var departments = [
                 'Department of Medical Services',
                 'Department of Public Health',
                 'Department of Health Technology',
                 'Department of Research and Development',
                 'Department of Health Regulation'
-                // Add other departments as needed
             ];
+            departments.forEach(function(dept) {
+                var option = document.createElement('option');
+                option.value = dept;
+                option.text = dept;
+                select.appendChild(option);
+            });
+            formContainer.appendChild(select);
 
-            var departmentList = departments.map(function(dept, index) {
-                return (index + 1) + '. ' + dept;
-            }).join('\n');
+            // Create the save button
+            var saveButton = document.createElement('button');
+            saveButton.innerText = 'Save';
+            formContainer.appendChild(saveButton);
 
-            var selection = prompt('Select Department:\n' + departmentList);
-            var selectedIndex = parseInt(selection) - 1;
+            saveButton.addEventListener('click', function() {
+                var title = input.value;
+                var department = select.value;
+                if (title && department) {
+                    var newEvent = {
+                        title: title + ' - ' + department,
+                        start: start,
+                        end: end,
+                        allDay: false,
+                        userId: userId,
+                        color: getDepartmentColor(department)
+                    };
 
-            if (selectedIndex >= 0 && selectedIndex < departments.length) {
-                return departments[selectedIndex];
-            } else {
-                alert('Invalid selection. Please try again.');
-                return null;
-            }
+                    // Save the event to Firebase
+                    db.ref('events').push(newEvent).then(function(ref) {
+                        newEvent.id = ref.key; // Save the Firebase-generated ID
+                        calendar.addEvent(newEvent);
+                        console.log('Event added:', newEvent);
+                        alert('Meeting booked successfully.');
+                    }).catch(function(error) {
+                        console.error('Error saving event:', error);
+                        alert('Failed to book meeting.');
+                    });
+                }
+                formContainer.remove(); // Remove the form after saving
+            });
+
+            return formContainer;
         }
 
         function getDepartmentColor(department) {
@@ -242,7 +281,6 @@
                 'Department of Health Technology': 'red',
                 'Department of Research and Development': 'orange',
                 'Department of Health Regulation': 'purple'
-                // Add other departments with corresponding colors
             };
 
             return departmentColors[department] || 'gray'; // Default to gray if no color is specified
@@ -250,4 +288,3 @@
     </script>
 </body>
 </html>
-
