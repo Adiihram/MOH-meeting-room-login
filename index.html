@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 1.2</title>
+    <title>Meeting Room Booking - Version 1.3</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -17,7 +17,7 @@
 </head>
 <body>
     <h1>Meeting Room Booking</h1>
-    <p>Version: 1.2</p> <!-- Displaying the version number on the page -->
+    <p>Version: 1.3</p> <!-- Displaying the version number on the page -->
     
     <button id="printButton" style="display:none;">Print Calendar</button>
     <div id="calendar" style="display:none; width: 100%; height: 600px; border: 1px solid #ccc;"></div>
@@ -49,13 +49,12 @@
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
-    domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
-    clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-    redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/", 
-    responseType: "token id_token",
-    scope: "openid profile email"
-});
-           
+                domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
+                clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
+                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/", 
+                responseType: "token id_token",
+                scope: "openid profile email"
+            });
             console.log("Auth0 initialized");
         }
 
@@ -158,56 +157,41 @@
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'timeGridWeek', // Use timeGridWeek for time selection
                     events: events,
+                    editable: true, // Allows direct input on the calendar
                     selectable: true,
                     selectHelper: true, // Allows the user to see the selected range
                     select: function(info) {
-                        console.log('Selected time range:', info.startStr, 'to', info.endStr);
+                        var newEvent = {
+                            start: info.startStr,
+                            end: info.endStr,
+                            allDay: false,  // Ensure it's not an all-day event to allow time range
+                            userId: userId
+                        };
+                        // Add a new event with inline editing
+                        calendar.addEvent(newEvent);
+                        calendar.unselect();
+                    },
+                    eventChange: function(info) {
+                        var event = info.event;
+                        var department = selectDepartment(); // Prompt department selection
+                        if (department) {
+                            event.setProp('title', event.title + ' - ' + department);
+                            event.setProp('color', getDepartmentColor(department));
 
-                        var title = prompt('Enter Meeting Title:');
-                        if (title) {
-                            var department = selectDepartment();
-                            if (department) {
-                                var newEvent = {
-                                    title: title + ' - ' + department,
-                                    start: info.startStr,
-                                    end: info.endStr,
-                                    allDay: false,  // Ensure it's not an all-day event to allow time range
-                                    userId: userId,
-                                    color: getDepartmentColor(department) // Assign a color based on department
-                                };
-
-                                // Save the event to Firebase
-                                db.ref('events').push(newEvent).then(function(ref) {
-                                    newEvent.id = ref.key; // Save the Firebase-generated ID
-                                    calendar.addEvent(newEvent);
-                                    console.log('Event added:', newEvent);
-                                    alert('Meeting booked successfully.');
-                                }).catch(function(error) {
-                                    console.error('Error saving event:', error);
-                                    alert('Failed to book meeting.');
+                            // Save or update the event in Firebase
+                            if (!event.id) {
+                                db.ref('events').push(event.toPlainObject()).then(function(ref) {
+                                    event.setProp('id', ref.key);
                                 });
+                            } else {
+                                db.ref('events/' + event.id).set(event.toPlainObject());
                             }
                         }
-                        calendar.unselect();
                     },
                     eventClick: function(info) {
                         if (info.event.extendedProps.userId === userId) {
                             var action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                            if (action === 'edit') {
-                                var newTitle = prompt('Enter new meeting title:', info.event.title);
-                                if (newTitle) {
-                                    var newDepartment = selectDepartment();
-                                    if (newDepartment) {
-                                        info.event.setProp('title', newTitle + ' - ' + newDepartment);
-                                        info.event.setProp('color', getDepartmentColor(newDepartment));
-                                        db.ref('events/' + info.event.id).update({
-                                            title: newTitle,
-                                            department: newDepartment,
-                                            color: getDepartmentColor(newDepartment)
-                                        });
-                                    }
-                                }
-                            } else if (action === 'delete') {
+                            if (action === 'delete') {
                                 if (confirm("Are you sure you want to delete this booking?")) {
                                     info.event.remove();
                                     db.ref('events/' + info.event.id).remove();
@@ -266,3 +250,4 @@
     </script>
 </body>
 </html>
+
