@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -112,38 +112,22 @@
         }
 
         // Ensure the DOM is fully loaded before initializing FullCalendar
-        <script>
         document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM fully loaded');
-
-        handleAuthentication();
-        
-        if (isAuthenticated()) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('logout').style.display = 'block';
-            document.getElementById('printButton').style.display = 'block'; // Show the print button after login
-            loadCalendar(localStorage.getItem('id_token')); // Retrieve the id_token as userId
-        } else {
-            console.log('User is not authenticated, showing login button.');
-            document.getElementById('calendar').style.display = 'none'; // Ensure the calendar is hidden
-            document.getElementById('login').style.display = 'block'; // Show the login button
-        }
-    });
-
-    function login() {
-        console.log("Login button clicked");
-        auth0.authorize();
-    }
-
-    function logout() {
-        console.log("Logout button clicked");
-        auth0.logout({
-            returnTo: window.location.href
+            console.log('DOM fully loaded');
+            
+            handleAuthentication();
+            
+            if (isAuthenticated()) {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('logout').style.display = 'block';
+                document.getElementById('printButton').style.display = 'block'; // Show the print button after login
+                loadCalendar(localStorage.getItem('id_token')); // Retrieve the id_token as userId
+            } else {
+                console.log('User is not authenticated, showing login button.');
+                document.getElementById('calendar').style.display = 'none'; // Ensure the calendar is hidden
+                document.getElementById('login').style.display = 'block'; // Show the login button
+            }
         });
-        document.getElementById('calendar').style.display = 'none'; // Hide the calendar on logout
-        document.getElementById('printButton').style.display = 'none'; // Hide the print button on logout
-    }
-    </script>
 
         function loadCalendar(userId) {
             if (!isAuthenticated()) {
@@ -233,9 +217,6 @@
 
                 calendar.render();
                 console.log("Calendar rendered with events:", events);
-            }).catch
-                         calendar.render();
-                console.log("Calendar rendered with events:", events);
             }).catch(function(error) {
                 console.error('Error fetching events:', error);
             });
@@ -243,46 +224,45 @@
 
         function selectDepartment() {
             var departments = [
-                'Department of Medical Services',
-                'Department of Public Health',
-                'Department of Health Technology',
-                'Department of Research and Development',
-                'Department of Health Regulation',
-                // Add other departments as needed
-            ];
+‘Department of Medical Services’,
+‘Department of Public Health’,
+‘Department of Health Technology’,
+‘Department of Research and Development’,
+‘Department of Health Regulation’,
+// Add other departments as needed
+];
+         var departmentList = departments.map(function(dept, index) {
+            return (index + 1) + '. ' + dept;
+        }).join('\n');
 
-            var departmentList = departments.map(function(dept, index) {
-                return (index + 1) + '. ' + dept;
-            }).join('\n');
+        var selection = prompt('Select Department:\n' + departmentList);
+        var selectedIndex = parseInt(selection) - 1;
 
-            var selection = prompt('Select Department:\n' + departmentList);
-            var selectedIndex = parseInt(selection) - 1;
-
-            if (selectedIndex >= 0 && selectedIndex < departments.length) {
-                return departments[selectedIndex];
-            } else {
-                alert('Invalid selection. Please try again.');
-                return null;
-            }
+        if (selectedIndex >= 0 && selectedIndex < departments.length) {
+            return departments[selectedIndex];
+        } else {
+            alert('Invalid selection. Please try again.');
+            return null;
         }
+    }
 
-        function getDepartmentColor(department) {
-            var departmentColors = {
-                'Department of Medical Services': 'blue',
-                'Department of Public Health': 'green',
-                'Department of Health Technology': 'red',
-                'Department of Research and Development': 'orange',
-                'Department of Health Regulation': 'purple'
-                // Add other departments with corresponding colors
-            };
+    function getDepartmentColor(department) {
+        var departmentColors = {
+            'Department of Medical Services': 'blue',
+            'Department of Public Health': 'green',
+            'Department of Health Technology': 'red',
+            'Department of Research and Development': 'orange',
+            'Department of Health Regulation': 'purple'
+            // Add other departments with corresponding colors
+        };
 
-            return departmentColors[department] || 'gray'; // Default to gray if no color is specified
-        }
+        return departmentColors[department] || 'gray'; // Default to gray if no color is specified
+    }
 
-        // Print the calendar
-        function printCalendar() {
-            window.print();
-        }
-    </script>
+    // Print the calendar
+    function printCalendar() {
+        window.print();
+    }
+</script>
 </body>
-</html> 
+</html>
