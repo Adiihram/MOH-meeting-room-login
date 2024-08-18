@@ -113,22 +113,35 @@
 
         // Ensure the DOM is fully loaded before initializing FullCalendar
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded');
-            
-            handleAuthentication();
-            
-            if (isAuthenticated()) {
-                document.getElementById('login').style.display = 'none';
-                document.getElementById('logout').style.display = 'block';
-                document.getElementById('printButton').style.display = 'block'; // Show the print button after login
-                loadCalendar(localStorage.getItem('id_token')); // Retrieve the id_token as userId
-            } else {
-                console.log('User is not authenticated, showing login button.');
-                document.getElementById('calendar').style.display = 'none'; // Ensure the calendar is hidden
-                document.getElementById('login').style.display = 'block'; // Show the login button
-            }
-        });
+    console.log('DOM fully loaded');
 
+    handleAuthentication();
+    
+    if (isAuthenticated()) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('logout').style.display = 'block';
+        document.getElementById('printButton').style.display = 'block'; // Show the print button after login
+        loadCalendar(localStorage.getItem('id_token')); // Retrieve the id_token as userId
+    } else {
+        console.log('User is not authenticated, showing login button.');
+        document.getElementById('calendar').style.display = 'none'; // Ensure the calendar is hidden
+        document.getElementById('login').style.display = 'block'; // Show the login button
+    }
+});
+
+function login() {
+    console.log("Login button clicked");
+    auth0.authorize();
+}
+
+function logout() {
+    console.log("Logout button clicked");
+    auth0.logout({
+        returnTo: window.location.href
+    });
+    document.getElementById('calendar').style.display = 'none'; // Hide the calendar on logout
+    document.getElementById('printButton').style.display = 'none'; // Hide the print button on logout
+}
         function loadCalendar(userId) {
             if (!isAuthenticated()) {
                 login();
