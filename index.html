@@ -7,7 +7,7 @@
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
-            font-family: 'Courier New', monospace;
+            font-family: 'Arial', sans-serif;
             background-color: #000;
             color: #fff;
             display: flex;
@@ -21,39 +21,46 @@
             border: 2px solid #00FFFF;
             border-radius: 10px;
             padding: 20px;
-            box-shadow: 0 0 10px #00FFFF;
+            box-shadow: 0 0 20px #00FFFF;
+            background-color: rgba(0, 0, 0, 0.8);
         }
         h1 {
             color: #FFD700;
-            text-shadow: 0 0 5px #FFD700;
+            text-shadow: 0 0 10px #FFD700;
+            margin-bottom: 20px;
         }
         #maze {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
             border: 2px solid #00FFFF;
             margin: 20px auto;
             position: relative;
             background-color: #000;
+            overflow: hidden;
         }
         .wall {
             background-color: #0000FF;
             position: absolute;
+            box-shadow: 0 0 5px #0000FF;
         }
         #pacman, .ghost {
             width: 20px;
             height: 20px;
             position: absolute;
+            transition: all 0.2s;
         }
         #pacman {
             background-color: #FFFF00;
             border-radius: 50%;
+            box-shadow: 0 0 10px #FFFF00;
         }
         .ghost {
             border-radius: 50% 50% 0 0;
+            box-shadow: 0 0 10px;
         }
-        #ghost1 { background-color: #FF0000; }
-        #ghost2 { background-color: #00FFFF; }
-        #ghost3 { background-color: #FFA500; }
+        #ghost1 { background-color: #FF0000; box-shadow: 0 0 10px #FF0000; }
+        #ghost2 { background-color: #00FFFF; box-shadow: 0 0 10px #00FFFF; }
+        #ghost3 { background-color: #FFA500; box-shadow: 0 0 10px #FFA500; }
         #loginButton {
             background-color: #FF0000;
             color: #FFFFFF;
@@ -62,6 +69,11 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px #FF0000;
+        }
+        #loginButton:hover {
+            background-color: #FF4500;
         }
     </style>
 </head>
@@ -82,25 +94,24 @@
                 responseType: "token id_token",
                 scope: "openid profile email"
             });
-            console.log("Auth0 initialized");
         }
 
         function createMaze() {
             const maze = document.getElementById('maze');
             const layout = [
-                "####################",
-                "#........##........#",
-                "#.####.####.####.##.#",
-                "#.####.####.####.##.#",
-                "#..................#",
-                "#.####.##.####.####.#",
-                "#......##....##....#",
-                "######.###### ##.###",
-                "#......##........###",
-                "#.####.## ###.##.###",
-                "#.####.## ###.##.###",
-                "#........###.......#",
-                "####################"
+                "############################",
+                "#............##............#",
+                "#.####.#####.##.#####.####.#",
+                "#.####.#####.##.#####.####.#",
+                "#..........................#",
+                "#.####.##.########.##.####.#",
+                "#......##....##....##......#",
+                "######.###### ##.######.####",
+                "#......##...........##.....#",
+                "#.####.## ###--### ##.####.#",
+                "#.####.## #      # ##.####.#",
+                "#........###    ###........#",
+                "############################"
             ];
 
             const cellSize = maze.offsetWidth / layout[0].length;
@@ -120,23 +131,45 @@
 
             const pacman = document.createElement('div');
             pacman.id = 'pacman';
-            pacman.style.left = '30px';
-            pacman.style.top = '30px';
             maze.appendChild(pacman);
 
             for (let i = 1; i <= 3; i++) {
                 const ghost = document.createElement('div');
                 ghost.id = `ghost${i}`;
                 ghost.className = 'ghost';
-                ghost.style.left = `${i * 40}px`;
-                ghost.style.top = `${i * 40}px`;
                 maze.appendChild(ghost);
             }
+        }
+
+        function moveCharacter(character) {
+            const maze = document.getElementById('maze');
+            const mazeRect = maze.getBoundingClientRect();
+            const charRect = character.getBoundingClientRect();
+            
+            const maxX = mazeRect.width - charRect.width;
+            const maxY = mazeRect.height - charRect.height;
+            
+            const newX = Math.floor(Math.random() * maxX);
+            const newY = Math.floor(Math.random() * maxY);
+            
+            character.style.left = `${newX}px`;
+            character.style.top = `${newY}px`;
+        }
+
+        function animateCharacters() {
+            const pacman = document.getElementById('pacman');
+            const ghosts = document.querySelectorAll('.ghost');
+            
+            setInterval(() => moveCharacter(pacman), 1000);
+            ghosts.forEach(ghost => {
+                setInterval(() => moveCharacter(ghost), 1500);
+            });
         }
 
         window.onload = function() {
             initializeAuth0();
             createMaze();
+            animateCharacters();
             document.getElementById('loginButton').addEventListener('click', function() {
                 auth0Client.authorize();
             });
