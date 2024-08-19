@@ -26,37 +26,37 @@
         h1 {
             color: #FFD700;
             text-shadow: 0 0 10px #FFD700;
+            margin-bottom: 10px;
         }
         #maze {
-            width: 400px;
-            height: 400px;
+            width: 300px;
+            height: 150px;
             border: 2px solid #00FFFF;
-            margin: 20px auto;
+            margin: 10px auto;
             position: relative;
-            background-color: #000;
+            background-color: #0000FF;
         }
         .wall {
-            background-color: #0000FF;
+            background-color: #000;
             position: absolute;
-            box-shadow: 0 0 5px #0000FF;
         }
         #pacman, .ghost {
-            width: 20px;
-            height: 20px;
+            width: 10px;
+            height: 10px;
             position: absolute;
-            transition: all 0.2s;
+            transition: all 0.1s;
         }
         #pacman {
             background-color: #FFFF00;
             border-radius: 50%;
-            box-shadow: 0 0 10px #FFFF00;
+            box-shadow: 0 0 5px #FFFF00;
         }
         .ghost {
             border-radius: 50% 50% 0 0;
         }
-        #ghost1 { background-color: #FF0000; box-shadow: 0 0 10px #FF0000; }
-        #ghost2 { background-color: #00FFFF; box-shadow: 0 0 10px #00FFFF; }
-        #ghost3 { background-color: #FFA500; box-shadow: 0 0 10px #FFA500; }
+        #ghost1 { background-color: #FF0000; box-shadow: 0 0 5px #FF0000; }
+        #ghost2 { background-color: #00FFFF; box-shadow: 0 0 5px #00FFFF; }
+        #ghost3 { background-color: #FFA500; box-shadow: 0 0 5px #FFA500; }
         #loginButton {
             background-color: #FF0000;
             color: #FFFFFF;
@@ -65,7 +65,7 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -79,7 +79,7 @@
         var auth0Client = null;
         var maze, pacman, ghosts;
         var mazeLayout = [
-            "############################",
+            "##############################",
             "#............##............#",
             "#.####.#####.##.#####.####.#",
             "#.####.#####.##.#####.####.#",
@@ -91,7 +91,7 @@
             "#.####.## ######## ##.####.#",
             "#.####.## ######## ##.####.#",
             "#..........................#",
-            "############################"
+            "##############################"
         ];
         var cellSize;
 
@@ -108,6 +108,7 @@
         function createMaze() {
             maze = document.getElementById('maze');
             cellSize = maze.offsetWidth / mazeLayout[0].length;
+            maze.style.height = (mazeLayout.length * cellSize) + 'px';
             
             mazeLayout.forEach((row, i) => {
                 for (let j = 0; j < row.length; j++) {
@@ -153,23 +154,28 @@
 
             character.style.left = `${x * cellSize}px`;
             character.style.top = `${y * cellSize}px`;
+            character.dataset.direction = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
         }
 
         function moveCharacter(character) {
-            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            const directions = {
+                up: [0, -1],
+                down: [0, 1],
+                left: [-1, 0],
+                right: [1, 0]
+            };
             const currentX = Math.floor(parseInt(character.style.left) / cellSize);
             const currentY = Math.floor(parseInt(character.style.top) / cellSize);
+            const [dx, dy] = directions[character.dataset.direction];
+            const newX = currentX + dx;
+            const newY = currentY + dy;
 
-            const validMoves = directions.filter(([dx, dy]) => {
-                const newX = currentX + dx;
-                const newY = currentY + dy;
-                return mazeLayout[newY] && mazeLayout[newY][newX] === '.';
-            });
-
-            if (validMoves.length > 0) {
-                const [dx, dy] = validMoves[Math.floor(Math.random() * validMoves.length)];
-                character.style.left = `${(currentX + dx) * cellSize}px`;
-                character.style.top = `${(currentY + dy) * cellSize}px`;
+            if (mazeLayout[newY] && mazeLayout[newY][newX] !== '#') {
+                character.style.left = `${newX * cellSize}px`;
+                character.style.top = `${newY * cellSize}px`;
+            } else {
+                // Reverse direction at dead ends
+                character.dataset.direction = ['up', 'down', 'left', 'right'].find(dir => dir !== character.dataset.direction);
             }
 
             checkCollision();
@@ -190,9 +196,9 @@
         }
 
         function animateCharacters() {
-            setInterval(() => moveCharacter(pacman), 300);
+            setInterval(() => moveCharacter(pacman), 100);
             ghosts.forEach(ghost => {
-                setInterval(() => moveCharacter(ghost), 500);
+                setInterval(() => moveCharacter(ghost), 150);
             });
         }
 
