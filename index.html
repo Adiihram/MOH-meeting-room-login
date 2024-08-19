@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meeting Room Booking - Pac-Man Edition</title>
-    <!-- Auth0 JavaScript -->
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Courier New', monospace;
             background-color: #000;
             color: #fff;
             display: flex;
@@ -19,9 +18,14 @@
         }
         .container {
             text-align: center;
+            border: 2px solid #00FFFF;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px #00FFFF;
         }
         h1 {
             color: #FFD700;
+            text-shadow: 0 0 5px #FFD700;
         }
         #maze {
             width: 300px;
@@ -29,34 +33,35 @@
             border: 2px solid #00FFFF;
             margin: 20px auto;
             position: relative;
+            background-color: #000;
         }
         .wall {
             background-color: #0000FF;
             position: absolute;
         }
-        #pacman {
+        #pacman, .ghost {
             width: 20px;
             height: 20px;
-            background-color: #FFFF00;
-            border-radius: 50%;
             position: absolute;
         }
+        #pacman {
+            background-color: #FFFF00;
+            border-radius: 50%;
+        }
         .ghost {
-            width: 20px;
-            height: 20px;
-            position: absolute;
             border-radius: 50% 50% 0 0;
         }
         #ghost1 { background-color: #FF0000; }
         #ghost2 { background-color: #00FFFF; }
         #ghost3 { background-color: #FFA500; }
-        button {
+        #loginButton {
             background-color: #FF0000;
             color: #FFFFFF;
             border: none;
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -78,35 +83,6 @@
                 scope: "openid profile email"
             });
             console.log("Auth0 initialized");
-        }
-
-        function handleAuthentication() {
-            auth0Client.parseHash(function(err, authResult) {
-                if (authResult && authResult.accessToken && authResult.idToken) {
-                    console.log("Authentication successful");
-                    window.location.hash = '';
-                    setSession(authResult);
-                    window.location.href = "/calendar.html"; // Redirect to the calendar page after login
-                } else if (err) {
-                    console.error('Authentication error:', err);
-                    alert('Error: ' + err.errorDescription);
-                } else {
-                    console.log("Authentication failed");
-                }
-            });
-        }
-
-        function setSession(authResult) {
-            console.log("Setting session");
-            var expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
-            localStorage.setItem('access_token', authResult.accessToken);
-            localStorage.setItem('id_token', authResult.idToken);
-            localStorage.setItem('expires_at', expiresAt);
-            console.log('Session set with authResult:', authResult);
-        }
-
-        function login() {
-            auth0Client.authorize();
         }
 
         function createMaze() {
@@ -160,9 +136,10 @@
 
         window.onload = function() {
             initializeAuth0();
-            handleAuthentication();
-            document.getElementById('loginButton').addEventListener('click', login);
             createMaze();
+            document.getElementById('loginButton').addEventListener('click', function() {
+                auth0Client.authorize();
+            });
         };
     </script>
 </body>
