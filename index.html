@@ -3,166 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.5</title>
-    <!-- FullCalendar CSS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <!-- FullCalendar JavaScript -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <title>Meeting Room Booking - Retro Edition</title>
     <!-- Auth0 JavaScript -->
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <!-- Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body {
-            font-family: 'Courier New', monospace;
+            font-family: 'Press Start 2P', cursive;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #000;
             margin: 0;
-            color: #0f0;
+            color: #FFD700;
         }
         .login-container {
             text-align: center;
             background-color: #000;
             padding: 20px;
             border-radius: 10px;
-            border: 2px solid #0f0;
-            box-shadow: 0 0 10px #0f0;
+            border: 2px solid #00FFFF;
+            box-shadow: 0 0 10px #00FFFF;
         }
         .login-container h1 {
             margin-bottom: 20px;
             font-size: 24px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px #00FFFF;
         }
         .login-container button {
             padding: 10px 20px;
-            background-color: #0f0;
-            color: #000;
+            background-color: #FF0000;
+            color: #FFFFFF;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
             margin-top: 20px;
         }
         .login-container button:hover {
-            background-color: #0c0;
+            background-color: #FF4500;
         }
         #maze {
-            width: 500px;
-            height: 500px;
+            width: 420px;
+            height: 420px;
             position: relative;
             background-color: #000;
             margin: 20px auto;
+            border: 2px solid #00FFFF;
+            overflow: hidden;
         }
         .wall {
             position: absolute;
-            background-color: #0f0;
+            background-color: #0000FF;
         }
         #pacman, .ghost {
             width: 20px;
             height: 20px;
             position: absolute;
-            transition: all 0.3s;
+            transition: all 0.1s linear;
         }
         #pacman {
-            background-color: yellow;
+            background-color: #FFFF00;
             border-radius: 50%;
-            clip-path: polygon(100% 50%, 75% 100%, 0 100%, 0 0, 75% 0);
+            clip-path: polygon(100% 50%, 85% 85%, 15% 85%, 15% 15%, 85% 15%);
+            animation: chomp 0.3s linear infinite;
         }
         .ghost {
-            background-color: red;
+            border-radius: 50% 50% 0 0;
+        }
+        #ghost1 { background-color: #FF0000; }
+        #ghost2 { background-color: #00FFFF; }
+        #ghost3 { background-color: #FFA500; }
+        .dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #FFFFFF;
             border-radius: 50%;
+        }
+        @keyframes chomp {
+            0% { clip-path: polygon(100% 50%, 85% 85%, 15% 85%, 15% 15%, 85% 15%); }
+            50% { clip-path: polygon(100% 50%, 100% 100%, 0% 100%, 0% 0%, 100% 0%); }
+            100% { clip-path: polygon(100% 50%, 85% 85%, 15% 85%, 15% 15%, 85% 15%); }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>Meeting Room Booking</h1>
-        <div id="maze">
-            <div id="pacman"></div>
-            <div class="ghost" id="ghost1"></div>
-            <div class="ghost" id="ghost2"></div>
-            <div class="ghost" id="ghost3"></div>
-        </div>
+        <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
     <script>
         var auth0Client = null;
         var pacman, ghosts;
-        var pacmanSpeed = 2; // Pac-Man speed
-        var ghostSpeed = 1; // Ghosts speed
         var walls = [];
-
-        function initializeAuth0() {
-            auth0Client = new auth0.WebAuth({
-                domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
-                clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/",
-                responseType: "token id_token",
-                scope: "openid profile email"
-            });
-            console.log("Auth0 initialized");
-        }
-
-        function handleAuthentication() {
-            auth0Client.parseHash(function(err, authResult) {
-                if (authResult && authResult.accessToken && authResult.idToken) {
-                    console.log("Authentication successful");
-                    window.location.hash = '';
-                    setSession(authResult);
-                    window.location.href = "/calendar.html"; // Redirect to the calendar page after login
-                } else if (err) {
-                    console.error('Authentication error:', err);
-                    alert('Error: ' + err.errorDescription);
-                } else {
-                    console.log("Authentication failed");
-                }
-            });
-        }
-
-        function setSession(authResult) {
-            console.log("Setting session");
-            var expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
-            localStorage.setItem('access_token', authResult.accessToken);
-            localStorage.setItem('id_token', authResult.idToken);
-            localStorage.setItem('expires_at', expiresAt);
-            console.log('Session set with authResult:', authResult);
-        }
-
-        function login() {
-            auth0Client.authorize();
-        }
+        var dots = [];
+        
+        // Auth0 initialization and authentication handling (keep your existing code here)
 
         function createMaze() {
             const maze = document.getElementById('maze');
-
-            // Smooth walls for a better design
             const layout = [
-                "WWWWWWWWWWWWWWWWWWWWWWWWWW",
-                "W..........W.............W",
-                "W.WWWW.WWWW.WWWW.WWWW.WW.W",
-                "W.WWWW.WWWW.WWWW.WWWW.WW.W",
-                "W........................W",
-                "W.WWWW.W.WWWW.WWWW.WWWW.WW",
-                "W.W...W...W...W...W...W..W",
-                "WWWW.WWWW.WWWW.WWWW.WWWW.W",
-                "W........................W",
-                "W.WWWW.WWWW.WWWW.WWWW.WWW",
-                "W.WWWW.WWWW.WWWW.WWWW.WWW",
-                "W........................W",
-                "WWWWWWWWWWWWWWWWWWWWWWWWWW"
+                "############################",
+                "#............##............#",
+                "#.####.#####.##.#####.####.#",
+                "#o####.#####.##.#####.####o#",
+                "#.####.#####.##.#####.####.#",
+                "#..........................#",
+                "#.####.##.########.##.####.#",
+                "#.####.##.########.##.####.#",
+                "#......##....##....##......#",
+                "######.##### ## #####.######",
+                "     #.##### ## #####.#     ",
+                "     #.##          ##.#     ",
+                "     #.## ###--### ##.#     ",
+                "######.## #      # ##.######",
+                "      .   #      #   .      ",
+                "######.## #      # ##.######",
+                "     #.## ######## ##.#     ",
+                "     #.##          ##.#     ",
+                "     #.## ######## ##.#     ",
+                "######.## ######## ##.######",
+                "#............##............#",
+                "#.####.#####.##.#####.####.#",
+                "#o####.#####.##.#####.####o#",
+                "#...##................##...#",
+                "###.##.##.########.##.##.###",
+                "#......##....##....##......#",
+                "#.##########.##.##########.#",
+                "#.##########.##.##########.#",
+                "#..........................#",
+                "############################"
             ];
 
             const cellSize = maze.offsetWidth / layout[0].length;
             layout.forEach((row, i) => {
                 for (let j = 0; j < row.length; j++) {
-                    if (row[j] === 'W') {
+                    if (row[j] === '#') {
                         const wall = document.createElement('div');
                         wall.className = 'wall';
                         wall.style.width = `${cellSize}px`;
@@ -171,59 +150,63 @@
                         wall.style.top = `${i * cellSize}px`;
                         maze.appendChild(wall);
                         walls.push(wall);
+                    } else if (row[j] === '.' || row[j] === 'o') {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        dot.style.left = `${j * cellSize + cellSize/2 - 3}px`;
+                        dot.style.top = `${i * cellSize + cellSize/2 - 3}px`;
+                        maze.appendChild(dot);
+                        dots.push(dot);
                     }
                 }
             });
+
+            pacman = document.createElement('div');
+            pacman.id = 'pacman';
+            maze.appendChild(pacman);
+
+            for (let i = 1; i <= 3; i++) {
+                const ghost = document.createElement('div');
+                ghost.id = `ghost${i}`;
+                ghost.className = 'ghost';
+                maze.appendChild(ghost);
+            }
         }
 
-        function moveCharacter(character, speed) {
+        function moveCharacter(character, dx, dy) {
             const maze = document.getElementById('maze');
             const mazeRect = maze.getBoundingClientRect();
             const charRect = character.getBoundingClientRect();
             
-            const maxX = mazeRect.width - charRect.width;
-            const maxY = mazeRect.height - charRect.height;
-            
-            let newX = parseInt(character.style.left || 0) + (Math.floor(Math.random() * 3 - 1) * speed);
-            let newY = parseInt(character.style.top || 0) + (Math.floor(Math.random() * 3 - 1) * speed);
+            let newX = charRect.left - mazeRect.left + dx;
+            let newY = charRect.top - mazeRect.top + dy;
             
             // Check for collisions with walls
-            walls.forEach(wall => {
+            if (!walls.some(wall => {
                 const wallRect = wall.getBoundingClientRect();
-                if (!(charRect.right < wallRect.left || 
-                      charRect.left > wallRect.right || 
-                      charRect.bottom < wallRect.top || 
-                      charRect.top > wallRect.bottom)) {
-                    // Reverse the movement
-                    newX = parseInt(character.style.left || 0);
-                    newY = parseInt(character.style.top || 0);
-                }
-            });
-
-            // Keep the character within the maze boundaries
-            newX = Math.max(0, Math.min(newX, maxX));
-            newY = Math.max(0, Math.min(newY, maxY));
-            
-            character.style.left = `${newX}px`;
-            character.style.top = `${newY}px`;
+                return !(newX + charRect.width < wallRect.left || 
+                         newX > wallRect.right || 
+                         newY + charRect.height < wallRect.top || 
+                         newY > wallRect.bottom);
+            })) {
+                character.style.left = `${newX}px`;
+                character.style.top = `${newY}px`;
+            }
         }
 
-        function startGame() {
-            pacman = document.getElementById('pacman');
-            ghosts = document.querySelectorAll('.ghost');
-            
-            pacman.style.left = '10px';
-            pacman.style.top = '10px';
-            
-            ghosts.forEach((ghost, index) => {
-                ghost.style.left = `${index * 40}px`;
-                ghost.style.top = `${index * 40}px`;
+        function gameLoop() {
+            // Move Pac-Man
+            const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+            const pacmanDirection = directions[Math.floor(Math.random() * directions.length)];
+            moveCharacter(pacman, pacmanDirection[0], pacmanDirection[1]);
+
+            // Move Ghosts
+            document.querySelectorAll('.ghost').forEach(ghost => {
+                const ghostDirection = directions[Math.floor(Math.random() * directions.length)];
+                moveCharacter(ghost, ghostDirection[0], ghostDirection[1]);
             });
 
-            setInterval(() => moveCharacter(pacman, pacmanSpeed), 200);
-            ghosts.forEach(ghost => {
-                setInterval(() => moveCharacter(ghost, ghostSpeed), 200);
-            });
+            requestAnimationFrame(gameLoop);
         }
 
         window.onload = function() {
@@ -231,7 +214,7 @@
             handleAuthentication();
             document.getElementById('loginButton').addEventListener('click', login);
             createMaze();
-            startGame();
+            gameLoop();
         };
     </script>
 </body>
