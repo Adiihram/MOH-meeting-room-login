@@ -31,7 +31,6 @@
         #maze {
             width: 300px;
             height: 150px;
-            border: 2px solid #00FFFF;
             margin: 10px auto;
             position: relative;
             background-color: #0000FF;
@@ -86,7 +85,7 @@
             "#..........................#",
             "#.####.##.########.##.####.#",
             "#......##....##....##......#",
-            "######.##### ## #####.######",
+            "######.#####.##.#####.######",
             "#......##...........##.....#",
             "#.####.## ######## ##.####.#",
             "#.####.## ######## ##.####.#",
@@ -174,14 +173,11 @@
                 character.style.left = `${newX * cellSize}px`;
                 character.style.top = `${newY * cellSize}px`;
             } else {
-                // Reverse direction at dead ends
                 character.dataset.direction = ['up', 'down', 'left', 'right'].find(dir => dir !== character.dataset.direction);
             }
-
-            checkCollision();
         }
 
-        function checkCollision() {
+        function checkCollisions() {
             const pacmanRect = pacman.getBoundingClientRect();
             ghosts.forEach(ghost => {
                 const ghostRect = ghost.getBoundingClientRect();
@@ -189,23 +185,22 @@
                     pacmanRect.right > ghostRect.left && 
                     pacmanRect.top < ghostRect.bottom && 
                     pacmanRect.bottom > ghostRect.top) {
-                    alert("Pac-Man caught by a ghost! Game over.");
                     positionCharacters();
                 }
             });
         }
 
-        function animateCharacters() {
-            setInterval(() => moveCharacter(pacman), 100);
-            ghosts.forEach(ghost => {
-                setInterval(() => moveCharacter(ghost), 150);
-            });
+        function animateFrame() {
+            moveCharacter(pacman);
+            ghosts.forEach(moveCharacter);
+            checkCollisions();
+            requestAnimationFrame(animateFrame);
         }
 
         window.onload = function() {
             initializeAuth0();
             createMaze();
-            animateCharacters();
+            requestAnimationFrame(animateFrame);
             document.getElementById('loginButton').addEventListener('click', function() {
                 auth0Client.authorize();
             });
