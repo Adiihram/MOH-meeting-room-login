@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Pac-Man Edition</title>
+    <title>DPP Meeting Room Booking</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -70,7 +70,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Meeting Room Booking</h1>
+        <h1>DPP Meeting Room</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -78,7 +78,7 @@
         var auth0Client = null;
         var maze, pacman, ghosts;
         var mazeLayout = [
-            "##############################",
+            "############################",
             "#............##............#",
             "#.####.#####.##.#####.####.#",
             "#.####.#####.##.#####.####.#",
@@ -90,7 +90,7 @@
             "#.####.## ######## ##.####.#",
             "#.####.## ######## ##.####.#",
             "#..........................#",
-            "##############################"
+            "############################"
         ];
         var cellSize;
 
@@ -157,23 +157,21 @@
         }
 
         function moveCharacter(character) {
-            const directions = {
-                up: [0, -1],
-                down: [0, 1],
-                left: [-1, 0],
-                right: [1, 0]
-            };
+            const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
             const currentX = Math.floor(parseInt(character.style.left) / cellSize);
             const currentY = Math.floor(parseInt(character.style.top) / cellSize);
-            const [dx, dy] = directions[character.dataset.direction];
-            const newX = currentX + dx;
-            const newY = currentY + dy;
 
-            if (mazeLayout[newY] && mazeLayout[newY][newX] !== '#') {
-                character.style.left = `${newX * cellSize}px`;
-                character.style.top = `${newY * cellSize}px`;
-            } else {
-                character.dataset.direction = ['up', 'down', 'left', 'right'].find(dir => dir !== character.dataset.direction);
+            // Filter valid directions
+            const validDirections = directions.filter(([dx, dy]) => {
+                const newX = currentX + dx;
+                const newY = currentY + dy;
+                return mazeLayout[newY] && mazeLayout[newY][newX] !== '#';
+            });
+
+            if (validDirections.length > 0) {
+                const [dx, dy] = validDirections[Math.floor(Math.random() * validDirections.length)];
+                character.style.left = `${(currentX + dx) * cellSize}px`;
+                character.style.top = `${(currentY + dy) * cellSize}px`;
             }
         }
 
