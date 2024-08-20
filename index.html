@@ -34,6 +34,7 @@
             margin: 10px auto;
             position: relative;
             background-color: #0000FF;
+            overflow: hidden;
         }
         .wall {
             background-color: #000;
@@ -147,13 +148,12 @@
         function positionCharacter(character) {
             let x, y;
             do {
-                x = Math.floor(Math.random() * mazeLayout[0].length);
-                y = Math.floor(Math.random() * mazeLayout.length);
+                x = Math.floor(Math.random() * (mazeLayout[0].length - 2)) + 1;
+                y = Math.floor(Math.random() * (mazeLayout.length - 2)) + 1;
             } while (mazeLayout[y][x] === '#');
 
             character.style.left = `${x * cellSize}px`;
             character.style.top = `${y * cellSize}px`;
-            character.dataset.direction = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
         }
 
         function moveCharacter(character) {
@@ -161,7 +161,6 @@
             const currentX = Math.floor(parseInt(character.style.left) / cellSize);
             const currentY = Math.floor(parseInt(character.style.top) / cellSize);
 
-            // Filter valid directions
             const validDirections = directions.filter(([dx, dy]) => {
                 const newX = currentX + dx;
                 const newY = currentY + dy;
@@ -170,8 +169,10 @@
 
             if (validDirections.length > 0) {
                 const [dx, dy] = validDirections[Math.floor(Math.random() * validDirections.length)];
-                character.style.left = `${(currentX + dx) * cellSize}px`;
-                character.style.top = `${(currentY + dy) * cellSize}px`;
+                const newX = currentX + dx;
+                const newY = currentY + dy;
+                character.style.left = `${newX * cellSize}px`;
+                character.style.top = `${newY * cellSize}px`;
             }
         }
 
