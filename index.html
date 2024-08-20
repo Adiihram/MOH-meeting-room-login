@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.0</title>
+    <title>DPP Meeting Room Booking v2.1</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.0</h1>
+        <h1>DPP Meeting Room v2.1</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -113,7 +113,7 @@
             cellSize = maze.offsetWidth / mazeLayout[0].length;
             maze.style.height = (mazeLayout.length * cellSize) + 'px';
             
-            maze.innerHTML = ''; // Clear existing content
+            maze.innerHTML = '';
             
             mazeLayout.forEach((row, i) => {
                 for (let j = 0; j < row.length; j++) {
@@ -177,7 +177,7 @@
             const validDirections = directions.filter(([dx, dy]) => {
                 const newX = currentX + dx;
                 const newY = currentY + dy;
-                return mazeLayout[newY] && mazeLayout[newY][newX] !== '#';
+                return newX >= 0 && newX < mazeLayout[0].length && newY >= 0 && newY < mazeLayout.length && mazeLayout[newY][newX] !== '#';
             });
 
             if (validDirections.length > 0) {
@@ -186,6 +186,14 @@
                 const newY = currentY + dy;
                 character.style.left = `${newX * cellSize}px`;
                 character.style.top = `${newY * cellSize}px`;
+            }
+        }
+
+        function checkBoundaries(character) {
+            const x = parseInt(character.style.left) / cellSize;
+            const y = parseInt(character.style.top) / cellSize;
+            if (x < 0 || x >= mazeLayout[0].length || y < 0 || y >= mazeLayout.length || mazeLayout[Math.floor(y)][Math.floor(x)] === '#') {
+                positionCharacter(character);
             }
         }
 
@@ -203,7 +211,7 @@
                         aliveGhosts--;
                         if (aliveGhosts === 0) {
                             setTimeout(() => {
-                                createMaze(); // Reset the game
+                                createMaze();
                             }, 1000);
                         }
                     }
@@ -214,7 +222,11 @@
         function animateFrame(timestamp) {
             if (timestamp - lastMove > moveInterval) {
                 moveCharacter(pacman);
-                ghosts.forEach(moveCharacter);
+                checkBoundaries(pacman);
+                ghosts.forEach(ghost => {
+                    moveCharacter(ghost);
+                    checkBoundaries(ghost);
+                });
                 checkCollisions();
                 lastMove = timestamp;
             }
