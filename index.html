@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking</title>
+    <title>DPP Meeting Room Booking v2.0</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room</h1>
+        <h1>DPP Meeting Room v2.0</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -95,7 +95,8 @@
         ];
         var cellSize;
         var lastMove = 0;
-        var moveInterval = 300; // Adjust this value to change speed (higher = slower)
+        var moveInterval = 300;
+        var aliveGhosts = 3;
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
@@ -111,6 +112,8 @@
             maze = document.getElementById('maze');
             cellSize = maze.offsetWidth / mazeLayout[0].length;
             maze.style.height = (mazeLayout.length * cellSize) + 'px';
+            
+            maze.innerHTML = ''; // Clear existing content
             
             mazeLayout.forEach((row, i) => {
                 for (let j = 0; j < row.length; j++) {
@@ -135,16 +138,22 @@
                 const ghost = document.createElement('div');
                 ghost.id = `ghost${i}`;
                 ghost.className = 'ghost';
+                ghost.dataset.alive = 'true';
                 maze.appendChild(ghost);
                 ghosts.push(ghost);
             }
 
             positionCharacters();
+            aliveGhosts = 3;
         }
 
         function positionCharacters() {
             positionCharacter(pacman);
-            ghosts.forEach(ghost => positionCharacter(ghost));
+            ghosts.forEach(ghost => {
+                if (ghost.dataset.alive === 'true') {
+                    positionCharacter(ghost);
+                }
+            });
         }
 
         function positionCharacter(character) {
@@ -159,6 +168,8 @@
         }
 
         function moveCharacter(character) {
+            if (character.dataset.alive === 'false') return;
+
             const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
             const currentX = Math.floor(parseInt(character.style.left) / cellSize);
             const currentY = Math.floor(parseInt(character.style.top) / cellSize);
@@ -181,12 +192,21 @@
         function checkCollisions() {
             const pacmanRect = pacman.getBoundingClientRect();
             ghosts.forEach(ghost => {
-                const ghostRect = ghost.getBoundingClientRect();
-                if (pacmanRect.left < ghostRect.right && 
-                    pacmanRect.right > ghostRect.left && 
-                    pacmanRect.top < ghostRect.bottom && 
-                    pacmanRect.bottom > ghostRect.top) {
-                    positionCharacters();
+                if (ghost.dataset.alive === 'true') {
+                    const ghostRect = ghost.getBoundingClientRect();
+                    if (pacmanRect.left < ghostRect.right && 
+                        pacmanRect.right > ghostRect.left && 
+                        pacmanRect.top < ghostRect.bottom && 
+                        pacmanRect.bottom > ghostRect.top) {
+                        ghost.dataset.alive = 'false';
+                        ghost.style.display = 'none';
+                        aliveGhosts--;
+                        if (aliveGhosts === 0) {
+                            setTimeout(() => {
+                                createMaze(); // Reset the game
+                            }, 1000);
+                        }
+                    }
                 }
             });
         }
