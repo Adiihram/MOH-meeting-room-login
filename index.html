@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.8</title>
+    <title>DPP Meeting Room Booking v2.9</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -67,12 +67,23 @@
             border-radius: 5px;
             margin-top: 10px;
         }
+        #startButton {
+            background-color: #00FF00;
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.8</h1>
+        <h1>DPP Meeting Room v2.9</h1>
         <div id="maze"></div>
+        <button id="startButton">Start Game</button>
         <button id="loginButton">Login</button>
     </div>
     <script>
@@ -92,15 +103,14 @@
         var cellSize;
         var lastMove = 0;
         var moveInterval = 200;
-
-        // Audio context
-        var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        var audioContext;
+        var isGameRunning = false;
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
                 clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/",
+                redirectUri: window.location.href,
                 responseType: "token id_token",
                 scope: "openid profile email"
             });
@@ -215,7 +225,7 @@
         }
 
         function animateFrame(timestamp) {
-            if (timestamp - lastMove > moveInterval) {
+            if (isGameRunning && timestamp - lastMove > moveInterval) {
                 moveCharacter(pacman);
                 ghosts.forEach(ghost => {
                     if (ghost.style.display !== 'none') {
@@ -229,7 +239,12 @@
         }
 
         // Audio functions
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
         function playWakaSound() {
+            if (!audioContext) return;
             const oscillator = audioContext.createOscillator();
             oscillator.type = 'square';
             oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
@@ -247,6 +262,7 @@
         }
 
         function playEatGhostSound() {
+            if (!audioContext) return;
             const oscillator = audioContext.createOscillator();
             oscillator.type = 'square';
             oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
@@ -264,6 +280,7 @@
         }
 
         function playStartSound() {
+            if (!audioContext) return;
             const oscillator = audioContext.createOscillator();
             oscillator.type = 'square';
             
@@ -285,14 +302,43 @@
             oscillator.stop(audioContext.currentTime + notes.length * duration);
         }
 
+        function startGame() {
+            if (!audioContext) {
+                initAudio();
+            }
+            isGameRunning = true;
+            playStartSound();
+            requestAnimationFrame(animateFrame);
+        }
+
         window.onload = function() {
             initializeAuth0();
             createMaze();
-            requestAnimationFrame(animateFrame);
-            playStartSound();
+            document.getElementById('startButton').addEventListener('click', startGame);
             document.getElementById('loginButton').addEventListener('click', function() {
                 auth0Client.authorize();
             });
+
+            // Check if the URL contains the Auth0 callback
+            if (window.location.hash) {
+                auth0Client.parseHash((err, authResult) => {
+                    if (authResult && authResult.accessToken && authResult.idToken) {
+                        // Set the time that the access token will expire at
+                        var expiresAt = JSON.stringify(
+                            authResult.expiresIn * 1000 + new Date().getTime()
+                        );
+                        localStorage.setItem('access_token', authResult.accessToken);
+                        localStorage.setItem('id_token', authResult.idToken);
+                        localStorage.setItem('expires_at', expiresAt);
+                        // Navigate to the home route
+                        window.location.hash = '';
+                        alert('Login successful!');
+                    } else if (err) {
+                        console.log(err);
+                        alert('Error: ' + err.error + '. Check the console for further details.');
+                    }
+                });
+            }
         };
     </script>
 </body>
