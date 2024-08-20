@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v3.0</title>
+    <title>DPP Meeting Room Booking v3.1</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v3.0</h1>
+        <h1>DPP Meeting Room v3.1</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -98,7 +98,7 @@
             auth0Client = new auth0.WebAuth({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
                 clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/calendar.html",
+                redirectUri: window.location.href,
                 responseType: "token id_token",
                 scope: "openid profile email"
             });
