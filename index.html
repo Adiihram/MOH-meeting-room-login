@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.3</title>
+    <title>DPP Meeting Room Booking v2.4</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.3</h1>
+        <h1>DPP Meeting Room v2.4</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -199,12 +199,21 @@
                         aliveGhosts--;
                         if (aliveGhosts === 0) {
                             setTimeout(() => {
-                                createMaze();
+                                resetGame();
                             }, 1000);
                         }
                     }
                 }
             });
+        }
+
+        function resetGame() {
+            ghosts.forEach(ghost => {
+                ghost.dataset.alive = 'true';
+                ghost.style.display = 'block';
+            });
+            positionCharacters();
+            aliveGhosts = 3;
         }
 
         function animateFrame(timestamp) {
