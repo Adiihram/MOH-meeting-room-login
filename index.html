@@ -3,15 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.6</title>
+    <title>DPP Meeting Room Booking v2.7</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
-        /* ... (styles remain the same) ... */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            border: 2px solid #00FFFF;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px #00FFFF;
+        }
+        h1 {
+            color: #FFD700;
+            text-shadow: 0 0 10px #FFD700;
+            margin-bottom: 10px;
+        }
+        #maze {
+            width: 300px;
+            height: 150px;
+            margin: 10px auto;
+            position: relative;
+            background-color: #000;
+            overflow: hidden;
+        }
+        .wall {
+            background-color: #0000FF;
+            position: absolute;
+        }
+        #pacman, .ghost {
+            width: 15px;
+            height: 15px;
+            position: absolute;
+            transition: all 0.2s;
+        }
+        #pacman {
+            background-color: #FFFF00;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #FFFF00;
+        }
+        .ghost {
+            border-radius: 50% 50% 0 0;
+        }
+        #ghost1 { background-color: #FF0000; box-shadow: 0 0 5px #FF0000; }
+        #ghost2 { background-color: #00FFFF; box-shadow: 0 0 5px #00FFFF; }
+        #ghost3 { background-color: #FFA500; box-shadow: 0 0 5px #FFA500; }
+        #loginButton {
+            background-color: #FF0000;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.6</h1>
+        <h1>DPP Meeting Room v2.7</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -33,10 +93,40 @@
         var lastMove = 0;
         var moveInterval = 200;
 
-        // ... (other functions remain the same) ...
+        function initializeAuth0() {
+            auth0Client = new auth0.WebAuth({
+                domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
+                clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
+                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/",
+                responseType: "token id_token",
+                scope: "openid profile email"
+            });
+        }
 
         function createMaze() {
-            // ... (maze creation code remains the same) ...
+            maze = document.getElementById('maze');
+            cellSize = maze.offsetWidth / mazeLayout[0].length;
+            maze.style.height = (mazeLayout.length * cellSize) + 'px';
+            
+            maze.innerHTML = '';
+            
+            mazeLayout.forEach((row, i) => {
+                for (let j = 0; j < row.length; j++) {
+                    if (row[j] === 'W') {
+                        const wall = document.createElement('div');
+                        wall.className = 'wall';
+                        wall.style.width = `${cellSize}px`;
+                        wall.style.height = `${cellSize}px`;
+                        wall.style.left = `${j * cellSize}px`;
+                        wall.style.top = `${i * cellSize}px`;
+                        maze.appendChild(wall);
+                    }
+                }
+            });
+
+            pacman = document.createElement('div');
+            pacman.id = 'pacman';
+            maze.appendChild(pacman);
 
             ghosts = [];
             for (let i = 1; i <= 3; i++) {
@@ -48,6 +138,24 @@
             }
 
             positionCharacters();
+        }
+
+        function positionCharacters() {
+            positionCharacter(pacman);
+            ghosts.forEach(ghost => {
+                positionCharacter(ghost);
+            });
+        }
+
+        function positionCharacter(character) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * mazeLayout[0].length);
+                y = Math.floor(Math.random() * mazeLayout.length);
+            } while (mazeLayout[y][x] === 'W');
+
+            character.style.left = `${x * cellSize}px`;
+            character.style.top = `${y * cellSize}px`;
         }
 
         function moveCharacter(character) {
