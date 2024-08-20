@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.5</title>
+    <title>DPP Meeting Room Booking - Calendar</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -39,7 +39,7 @@
 </head>
 <body>
     <button id="logoutButton">Logout</button>
-    <button id="printButton" style="display:none;">Print Calendar</button>
+    <button id="printButton">Print Calendar</button>
     <div id="calendar"></div>
 
     <script>
@@ -54,6 +54,8 @@
             measurementId: "G-MDSDN8ZS5F"
         };
 
+        let db;
+
         function initializeFirebase() {
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
@@ -63,10 +65,9 @@
         }
 
         function handleAuthentication() {
-            // Authentication check
             const accessToken = localStorage.getItem('access_token');
             if (!accessToken) {
-                window.location.href = "/index.html"; // Redirect to login if not authenticated
+                window.location.href = window.location.origin + "/MOH-meeting-room-login/";
             } else {
                 loadCalendar();
             }
@@ -97,7 +98,7 @@
                                 start: info.startStr,
                                 end: info.endStr,
                                 allDay: false,
-                                color: '#007bff' // Default color
+                                color: '#007bff'
                             };
 
                             db.ref('events').push(newEvent).then(function(ref) {
@@ -125,7 +126,7 @@
                     validRange: function(nowDate) {
                         return {
                             start: nowDate,
-                            end: nowDate.setDate(nowDate.getDate() + 365) // 1 year range
+                            end: nowDate.setDate(nowDate.getDate() + 365)
                         };
                     }
                 });
@@ -138,7 +139,7 @@
             localStorage.removeItem('access_token');
             localStorage.removeItem('id_token');
             localStorage.removeItem('expires_at');
-            window.location.href = "/index.html";
+            window.location.href = "https://dev-tpwyh6hlgc15eq8h.us.auth0.com/v2/logout?client_id=cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9&returnTo=" + encodeURIComponent(window.location.origin + "/MOH-meeting-room-login/");
         }
 
         window.onload = function() {
