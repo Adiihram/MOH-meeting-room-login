@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.4</title>
+    <title>DPP Meeting Room Booking v2.5</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.4</h1>
+        <h1>DPP Meeting Room v2.5</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -197,7 +197,9 @@
                         ghost.dataset.alive = 'false';
                         ghost.style.display = 'none';
                         aliveGhosts--;
+                        console.log("Ghost caught! Alive ghosts:", aliveGhosts);
                         if (aliveGhosts === 0) {
+                            console.log("All ghosts caught, resetting game");
                             setTimeout(() => {
                                 resetGame();
                             }, 1000);
@@ -208,6 +210,7 @@
         }
 
         function resetGame() {
+            console.log("Resetting game");
             ghosts.forEach(ghost => {
                 ghost.dataset.alive = 'true';
                 ghost.style.display = 'block';
