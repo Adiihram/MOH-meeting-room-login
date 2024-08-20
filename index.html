@@ -44,7 +44,7 @@
             width: 10px;
             height: 10px;
             position: absolute;
-            transition: all 0.1s;
+            transition: all 0.3s;
         }
         #pacman {
             background-color: #FFFF00;
@@ -94,6 +94,8 @@
             "############################"
         ];
         var cellSize;
+        var lastMove = 0;
+        var moveInterval = 300; // Adjust this value to change speed (higher = slower)
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
@@ -189,10 +191,13 @@
             });
         }
 
-        function animateFrame() {
-            moveCharacter(pacman);
-            ghosts.forEach(moveCharacter);
-            checkCollisions();
+        function animateFrame(timestamp) {
+            if (timestamp - lastMove > moveInterval) {
+                moveCharacter(pacman);
+                ghosts.forEach(moveCharacter);
+                checkCollisions();
+                lastMove = timestamp;
+            }
             requestAnimationFrame(animateFrame);
         }
 
