@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.2</title>
+    <title>DPP Meeting Room Booking v2.3</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.2</h1>
+        <h1>DPP Meeting Room v2.3</h1>
         <div id="maze"></div>
         <button id="loginButton">Login</button>
     </div>
@@ -79,13 +79,15 @@
         var auth0Client = null;
         var maze, pacman, ghosts;
         var mazeLayout = [
-            "WWWWWWWWWWW",
-            "W.........W",
-            "W.WW.WW.W.W",
-            "W.W.....W.W",
-            "W.W.WWW.W.W",
-            "W...W.....W",
-            "WWWWWWWWWWW"
+            "WWWWWWWWWWWWWWWWWWWW",
+            "W..................W",
+            "W.WWWW.WWWW.WWWW.W.W",
+            "W.W....W....W....W.W",
+            "W.W.WW.W.WW.W.WW.W.W",
+            "W.W....W....W....W.W",
+            "W.WWWW.WWWW.WWWW.W.W",
+            "W..................W",
+            "WWWWWWWWWWWWWWWWWWWW"
         ];
         var cellSize;
         var lastMove = 0;
