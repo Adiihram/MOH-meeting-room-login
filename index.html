@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking v2.9</title>
+    <title>DPP Meeting Room Booking v3.0</title>
     <script src="https://cdn.auth0.com/js/auth0/9.13/auth0.min.js"></script>
     <style>
         body {
@@ -67,23 +67,12 @@
             border-radius: 5px;
             margin-top: 10px;
         }
-        #startButton {
-            background-color: #00FF00;
-            color: #000000;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>DPP Meeting Room v2.9</h1>
+        <h1>DPP Meeting Room v3.0</h1>
         <div id="maze"></div>
-        <button id="startButton">Start Game</button>
         <button id="loginButton">Login</button>
     </div>
     <script>
@@ -103,14 +92,13 @@
         var cellSize;
         var lastMove = 0;
         var moveInterval = 200;
-        var audioContext;
-        var isGameRunning = false;
+        var aliveGhosts = 3;
 
         function initializeAuth0() {
             auth0Client = new auth0.WebAuth({
                 domain: "dev-tpwyh6hlgc15eq8h.us.auth0.com",
                 clientID: "cLBQYcrc1mZjkZx8uG7WQdLgkGWEgoo9",
-                redirectUri: window.location.href,
+                redirectUri: "https://adiihram.github.io/MOH-meeting-room-login/calendar.html",
                 responseType: "token id_token",
                 scope: "openid profile email"
             });
@@ -188,9 +176,6 @@
                 const newY = currentY + dy;
                 character.style.left = `${newX * cellSize}px`;
                 character.style.top = `${newY * cellSize}px`;
-                if (character === pacman) {
-                    playWakaSound();
-                }
             }
         }
 
@@ -204,9 +189,9 @@
                         pacmanRect.top < ghostRect.bottom && 
                         pacmanRect.bottom > ghostRect.top) {
                         ghost.style.display = 'none';
-                        playEatGhostSound();
-                        console.log(`Ghost ${index + 1} caught!`);
-                        if (ghosts.every(g => g.style.display === 'none')) {
+                        aliveGhosts--;
+                        console.log(`Ghost ${index + 1} caught! Alive ghosts: ${aliveGhosts}`);
+                        if (aliveGhosts === 0) {
                             console.log("All ghosts caught, resetting game");
                             setTimeout(resetGame, 1000);
                         }
@@ -221,11 +206,11 @@
                 ghost.style.display = 'block';
             });
             positionCharacters();
-            playStartSound();
+            aliveGhosts = 3;
         }
 
         function animateFrame(timestamp) {
-            if (isGameRunning && timestamp - lastMove > moveInterval) {
+            if (timestamp - lastMove > moveInterval) {
                 moveCharacter(pacman);
                 ghosts.forEach(ghost => {
                     if (ghost.style.display !== 'none') {
@@ -238,83 +223,10 @@
             requestAnimationFrame(animateFrame);
         }
 
-        // Audio functions
-        function initAudio() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        function playWakaSound() {
-            if (!audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime + 0.05);
-            
-            const gainNode = audioContext.createGain();
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-        }
-
-        function playEatGhostSound() {
-            if (!audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(880, audioContext.currentTime + 0.1);
-            
-            const gainNode = audioContext.createGain();
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.2);
-        }
-
-        function playStartSound() {
-            if (!audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'square';
-            
-            const notes = [440, 494, 523, 587, 659, 698, 784];
-            const duration = 0.1;
-            
-            notes.forEach((note, index) => {
-                oscillator.frequency.setValueAtTime(note, audioContext.currentTime + index * duration);
-            });
-            
-            const gainNode = audioContext.createGain();
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + notes.length * duration);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + notes.length * duration);
-        }
-
-        function startGame() {
-            if (!audioContext) {
-                initAudio();
-            }
-            isGameRunning = true;
-            playStartSound();
-            requestAnimationFrame(animateFrame);
-        }
-
         window.onload = function() {
             initializeAuth0();
             createMaze();
-            document.getElementById('startButton').addEventListener('click', startGame);
+            requestAnimationFrame(animateFrame);
             document.getElementById('loginButton').addEventListener('click', function() {
                 auth0Client.authorize();
             });
@@ -330,9 +242,8 @@
                         localStorage.setItem('access_token', authResult.accessToken);
                         localStorage.setItem('id_token', authResult.idToken);
                         localStorage.setItem('expires_at', expiresAt);
-                        // Navigate to the home route
-                        window.location.hash = '';
-                        alert('Login successful!');
+                        // Navigate to the calendar page
+                        window.location.href = "https://adiihram.github.io/MOH-meeting-room-login/calendar.html";
                     } else if (err) {
                         console.log(err);
                         alert('Error: ' + err.error + '. Check the console for further details.');
