@@ -12,13 +12,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <!-- Include the necessary CSS for a sleek, Apple-like design -->
+    <!-- Additional CSS for styling -->
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f0f5;
+            background-color: #f4f7f6;
         }
 
         h1 {
@@ -31,6 +31,9 @@
             max-width: 900px;
             margin: 40px auto;
             padding: 0 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
         }
 
         .fc-toolbar {
@@ -68,11 +71,66 @@
             border-radius: 5px;
             padding: 2px 5px;
         }
+
+        .fc-daygrid-day-number {
+            position: relative;
+        }
+
+        .islamic-date {
+            font-size: 0.8em;
+            color: #666;
+            position: absolute;
+            top: 20px;
+            right: 5px;
+        }
+
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #007aff;
+            color: white;
+            padding: 20px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #sidebar h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        #logoutButton {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
+    <div id="sidebar">
+        <h2>Analytics</h2>
+        <p id="dailyBookings">Daily Bookings: 0</p>
+        <p id="weeklyBookings">Weekly Bookings: 0</p>
+        <p id="monthlyBookings">Monthly Bookings: 0</p>
+        <p id="dailyHours">Daily Hours Booked: 0</p>
+        <p id="weeklyHours">Weekly Hours Booked: 0</p>
+        <p id="monthlyHours">Monthly Hours Booked: 0</p>
+        <p id="vacantDays">Vacant Days: 0</p>
+        <p id="vacantHours">Vacant Hours: 0</p>
+    </div>
+
     <h1>Meeting Room Booking - Version 2.6</h1>
     <div id="calendar"></div>
+    <button id="logoutButton">Logout</button>
 
     <script>
         const firebaseConfig = {
@@ -118,9 +176,19 @@
                         }
                     }
                 ],
+                dateDidMount: function(info) {
+                    const islamicDate = getIslamicDate(info.date);
+                    const element = info.el.querySelector('.fc-daygrid-day-number');
+                    if (element) {
+                        const islamicDateElement = document.createElement('span');
+                        islamicDateElement.className = 'islamic-date';
+                        islamicDateElement.textContent = islamicDate;
+                        element.appendChild(islamicDateElement);
+                    }
+                },
                 select: function(info) {
-                    const title = prompt('Enter Meeting Title:');
-                    const department = prompt('Enter Department:');
+                    let title = prompt('Enter Meeting Title:');
+                    let department = prompt('Enter Department:');
                     if (title && department) {
                         const newEvent = {
                             title: `${title} - ${department}`,
@@ -133,6 +201,7 @@
                             newEvent.id = ref.key;
                             calendar.addEvent(newEvent);
                             alert('Meeting booked successfully.');
+                            updateAnalytics();
                         }).catch(function(error) {
                             console.error('Error saving event:', error);
                             alert('Failed to book meeting.');
@@ -141,31 +210,42 @@
                     calendar.unselect();
                 },
                 eventClick: function(info) {
-                    if (confirm("Do you want to edit or delete this booking?")) {
-                        const action = prompt("Type 'edit' to change the booking or 'delete' to cancel it.");
-                        if (action === 'edit') {
-                            const newTitle = prompt('Enter new meeting title:', info.event.title);
-                            const newDepartment = prompt('Enter new department:', info.event.extendedProps.department);
-                            if (newTitle && newDepartment) {
-                                info.event.setProp('title', `${newTitle} - ${newDepartment}`);
-                                info.event.setProp('color', getDepartmentColor(newDepartment));
-                                db.ref('events/' + info.event.id).update({
-                                    title: newTitle,
-                                    department: newDepartment,
-                                    color: getDepartmentColor(newDepartment)
-                                });
-                            }
-                        } else if (action === 'delete') {
-                            if (confirm("Are you sure you want to delete this booking?")) {
-                                db.ref('events/' + info.event.id).remove();
-                                info.event.remove();
-                            }
+                    const action = confirm("Do you want to edit or delete this booking?") ? 
+                        prompt("Type 'edit' to change the booking or 'delete' to cancel it.") : null;
+                    if (action === 'edit') {
+                        const newTitle = prompt('Enter new meeting title:', info.event.title);
+                        const newDepartment = prompt('Enter new department:', info.event.extendedProps.department);
+                        if (newTitle && newDepartment) {
+                            info.event.setProp('title', `${newTitle} - ${newDepartment}`);
+                            info.event.setProp('color', getDepartmentColor(newDepartment));
+                            db.ref('events/' + info.event.id).update({
+                                title: newTitle,
+                                department: newDepartment,
+                                color: getDepartmentColor(newDepartment)
+                            });
+                            updateAnalytics();
+                        }
+                    } else if (action === 'delete') {
+                        if (confirm("Are you sure you want to delete this booking?")) {
+                            db.ref('events/' + info.event.id).remove();
+                            info.event.remove();
+                            updateAnalytics();
                         }
                     }
                 }
             });
             calendar.render();
+            updateAnalytics();
         });
+
+        function getIslamicDate(date) {
+            const islamicDate = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }).format(date);
+            return islamicDate;
+        }
 
         function getDepartmentColor(department) {
             const departmentColors = {
@@ -177,6 +257,80 @@
             };
             return departmentColors[department] || 'gray';
         }
+
+        function updateAnalytics() {
+            db.ref('events').once('value').then(function(snapshot) {
+                const events = [];
+                snapshot.forEach(function(childSnapshot) {
+                    const event = childSnapshot.val();
+                    events.push(event);
+                });
+
+                const dailyBookings = events.filter(event => isToday(event.start)).length;
+                const weeklyBookings = events.filter(event => isThisWeek(event.start)).length;
+                const monthlyBookings = events.filter(event => isThisMonth(event.start)).length;
+                const dailyHours = calculateHours(events, 'day');
+                const weeklyHours = calculateHours(events, 'week');
+                const monthlyHours = calculateHours(events, 'month');
+                const vacantDays = 30 - new Set(events.map(event => event.start.split('T')[0])).size;
+                const vacantHours = calculateVacantHours(events);
+
+                document.getElementById('dailyBookings').textContent = `Daily Bookings: ${dailyBookings}`;
+                document.getElementById('weeklyBookings').textContent = `Weekly Bookings: ${weeklyBookings}`;
+                document.getElementById('monthlyBookings').textContent = `Monthly Bookings: ${monthlyBookings}`;
+                document.getElementById('dailyHours').textContent = `Daily Hours Booked: ${dailyHours}`;
+                document.getElementById('weeklyHours').textContent = `Weekly Hours Booked: ${weeklyHours}`;
+                document.getElementById('monthlyHours').textContent = `Monthly Hours Booked: ${monthlyHours}`;
+                document.getElementById('vacantDays').textContent = `Vacant Days: ${vacantDays}`;
+                document.getElementById('vacantHours').textContent = `Vacant Hours: ${vacantHours}`;
+            });
+        }
+
+        function isToday(dateStr) {
+            const today = new Date();
+            const date = new Date(dateStr);
+            return date.toDateString() === today.toDateString();
+        }
+
+        function isThisWeek(dateStr) {
+            const today = new Date();
+            const date = new Date(dateStr);
+            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+            return date >= startOfWeek && date <= today;
+        }
+
+        function isThisMonth(dateStr) {
+            const today = new Date();
+            const date = new Date(dateStr);
+            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+        }
+
+        function calculateHours(events, period) {
+            let totalHours = 0;
+            events.forEach(event => {
+                const start = new Date(event.start);
+                const end = new Date(event.end);
+                const hours = (end - start) / 36e5; // Convert milliseconds to hours
+                if (period === 'day' && isToday(event.start)) {
+                    totalHours += hours;
+                } else if (period === 'week' && isThisWeek(event.start)) {
+                    totalHours += hours;
+                } else if (period === 'month' && isThisMonth(event.start)) {
+                    totalHours += hours;
+                }
+            });
+            return totalHours;
+        }
+
+        function calculateVacantHours(events) {
+            const totalHours = 30 * 8; // 8 working hours per day * 30 days in a month
+            const bookedHours = calculateHours(events, 'month');
+            return totalHours - bookedHours;
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            // Handle logout logic here
+        });
     </script>
 </body>
 </html>
