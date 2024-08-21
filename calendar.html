@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.8</title>
+    <title>Meeting Room Booking - Version 2.9</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -156,7 +156,7 @@
         <p id="vacantHours">Vacant Hours: 0</p>
     </div>
 
-    <h1>Meeting Room Booking - Version 2.8</h1>
+    <h1>Meeting Room Booking - Version 2.9</h1>
     <div id="calendar-container">
         <div id="calendar"></div>
     </div>
@@ -180,7 +180,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
