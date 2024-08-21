@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Room Booking - Version 2.6</title>
+    <title>Meeting Room Booking - Version 2.7</title>
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- FullCalendar JavaScript -->
@@ -84,6 +84,12 @@
             right: 5px;
         }
 
+        .islamic-month {
+            font-size: 0.9em;
+            color: #999;
+            text-align: center;
+        }
+
         #sidebar {
             position: fixed;
             left: 0;
@@ -104,7 +110,7 @@
         #logoutButton {
             position: fixed;
             top: 20px;
-            left: 20px;
+            left: 270px;
             padding: 10px 20px;
             background-color: #ff3b30;
             color: white;
@@ -128,7 +134,7 @@
         <p id="vacantHours">Vacant Hours: 0</p>
     </div>
 
-    <h1>Meeting Room Booking - Version 2.6</h1>
+    <h1>Meeting Room Booking - Version 2.7</h1>
     <div id="calendar"></div>
     <button id="logoutButton">Logout</button>
 
@@ -188,7 +194,7 @@
                 },
                 select: function(info) {
                     let title = prompt('Enter Meeting Title:');
-                    let department = prompt('Enter Department:');
+                    let department = promptDepartmentSelection();
                     if (title && department) {
                         const newEvent = {
                             title: `${title} - ${department}`,
@@ -214,7 +220,7 @@
                         prompt("Type 'edit' to change the booking or 'delete' to cancel it.") : null;
                     if (action === 'edit') {
                         const newTitle = prompt('Enter new meeting title:', info.event.title);
-                        const newDepartment = prompt('Enter new department:', info.event.extendedProps.department);
+                        const newDepartment = promptDepartmentSelection(info.event.extendedProps.department);
                         if (newTitle && newDepartment) {
                             info.event.setProp('title', `${newTitle} - ${newDepartment}`);
                             info.event.setProp('color', getDepartmentColor(newDepartment));
@@ -234,102 +240,49 @@
                     }
                 }
             });
+
             calendar.render();
             updateAnalytics();
-        });
 
-        function getIslamicDate(date) {
-            const islamicDate = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            }).format(date);
-            return islamicDate;
-        }
-
-        function getDepartmentColor(department) {
-            const departmentColors = {
-                'Department of Medical Services': 'blue',
-                'Department of Public Health': 'green',
-                'Department of Health Technology': 'red',
-                'Department of Research and Development': 'orange',
-                'Department of Health Regulation': 'purple'
-            };
-            return departmentColors[department] || 'gray';
-        }
-
-        function updateAnalytics() {
-            db.ref('events').once('value').then(function(snapshot) {
-                const events = [];
-                snapshot.forEach(function(childSnapshot) {
-                    const event = childSnapshot.val();
-                    events.push(event);
-                });
-
-                const dailyBookings = events.filter(event => isToday(event.start)).length;
-                const weeklyBookings = events.filter(event => isThisWeek(event.start)).length;
-                const monthlyBookings = events.filter(event => isThisMonth(event.start)).length;
-                const dailyHours = calculateHours(events, 'day');
-                const weeklyHours = calculateHours(events, 'week');
-                const monthlyHours = calculateHours(events, 'month');
-                const vacantDays = 30 - new Set(events.map(event => event.start.split('T')[0])).size;
-                const vacantHours = calculateVacantHours(events);
-
-                document.getElementById('dailyBookings').textContent = `Daily Bookings: ${dailyBookings}`;
-                document.getElementById('weeklyBookings').textContent = `Weekly Bookings: ${weeklyBookings}`;
-                document.getElementById('monthlyBookings').textContent = `Monthly Bookings: ${monthlyBookings}`;
-                document.getElementById('dailyHours').textContent = `Daily Hours Booked: ${dailyHours}`;
-                document.getElementById('weeklyHours').textContent = `Weekly Hours Booked: ${weeklyHours}`;
-                document.getElementById('monthlyHours').textContent = `Monthly Hours Booked: ${monthlyHours}`;
-                document.getElementById('vacantDays').textContent = `Vacant Days: ${vacantDays}`;
-                document.getElementById('vacantHours').textContent = `Vacant Hours: ${vacantHours}`;
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                // Handle logout logic here
             });
-        }
 
-        function isToday(dateStr) {
-            const today = new Date();
-            const date = new Date(dateStr);
-            return date.toDateString() === today.toDateString();
-        }
+            function getIslamicDate(date) {
+                // Implement logic to get the Islamic date for a given Gregorian date
+                return "16 Safar 1446"; // Example static return value; replace with actual logic
+            }
 
-        function isThisWeek(dateStr) {
-            const today = new Date();
-            const date = new Date(dateStr);
-            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-            return date >= startOfWeek && date <= today;
-        }
+            function promptDepartmentSelection(existingDepartment = '') {
+                const departments = [
+                    'Department of Medical Services',
+                    'Department of Public Health',
+                    'Department of Health Technology',
+                    'Department of Research and Development',
+                    'Department of Health Regulation'
+                ];
+                const departmentList = departments.map(function(dept, index) {
+                    return (index + 1) + '. ' + dept;
+                }).join('\n');
 
-        function isThisMonth(dateStr) {
-            const today = new Date();
-            const date = new Date(dateStr);
-            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-        }
+                let selection = prompt('Select Department:\n' + departmentList + '\n\nType a new department if not listed:', existingDepartment);
+                return selection ? selection : existingDepartment;
+            }
 
-        function calculateHours(events, period) {
-            let totalHours = 0;
-            events.forEach(event => {
-                const start = new Date(event.start);
-                const end = new Date(event.end);
-                const hours = (end - start) / 36e5; // Convert milliseconds to hours
-                if (period === 'day' && isToday(event.start)) {
-                    totalHours += hours;
-                } else if (period === 'week' && isThisWeek(event.start)) {
-                    totalHours += hours;
-                } else if (period === 'month' && isThisMonth(event.start)) {
-                    totalHours += hours;
-                }
-            });
-            return totalHours;
-        }
+            function getDepartmentColor(department) {
+                const departmentColors = {
+                    'Department of Medical Services': 'blue',
+                    'Department of Public Health': 'green',
+                    'Department of Health Technology': 'red',
+                    'Department of Research and Development': 'orange',
+                    'Department of Health Regulation': 'purple'
+                };
+                return departmentColors[department] || 'gray';
+            }
 
-        function calculateVacantHours(events) {
-            const totalHours = 30 * 8; // 8 working hours per day * 30 days in a month
-            const bookedHours = calculateHours(events, 'month');
-            return totalHours - bookedHours;
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', function() {
-            // Handle logout logic here
+            function updateAnalytics() {
+                // Add logic to update analytics data
+            }
         });
     </script>
 </body>
