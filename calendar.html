@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,9 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>        
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap');
-        
+
         body {
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
@@ -18,95 +19,132 @@
             background-color: #f5f5f7;
             color: #1d1d1f;
         }
+
         .container {
-    display: flex;
-    min-height: 100vh;
-}
-.sidebar {
-    width: 250px;
-    background-color: #ffffff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 20px;
-    overflow-y: auto;
-    height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 0;
-}
-#main-content {
-    flex-grow: 1;
-    padding: 20px 20px 20px 270px; /* Keep this as is */
-    transition: padding-left 0.3s ease-in-out; /* Add this line */
-}        
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-230px);
+        }
+
+        #toggleSidebar {
+            position: fixed;
+            left: 250px;
+            top: 10px;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .sidebar.collapsed #toggleSidebar {
+            left: 20px;
+        }
+
+        #main-content {
+            flex-grow: 1;
+            padding: 20px 20px 20px 270px;
+            transition: padding-left 0.3s ease-in-out;
+        }
+
+        .sidebar.collapsed + #main-content {
+            padding-left: 40px;
+        }
+
         .sidebar h2 {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 20px;
         }
+
         .analytics-card {
             background-color: #f5f5f7;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 15px;
         }
+
         .analytics-card h3 {
             font-size: 16px;
             font-weight: 600;
             margin-top: 0;
             margin-bottom: 10px;
         }
+
         .analytics-item {
             display: flex;
             align-items: center;
             margin-bottom: 8px;
         }
+
         .analytics-icon {
             font-size: 16px;
             margin-right: 8px;
             width: 20px;
             text-align: center;
         }
+
         .analytics-label {
             flex-grow: 1;
             font-size: 14px;
             color: #86868b;
         }
+
         .analytics-value {
             font-weight: 500;
             font-size: 14px;
         }
-        
-        }
+
         #calendar {
             background-color: #ffffff;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
+
         .fc-header-toolbar {
-            margin-bottom: 1.5em!important;
+            margin-bottom: 1.5em !important;
         }
+
         .fc-toolbar-title {
-            font-size: 20px!important;
+            font-size: 20px !important;
             font-weight: 600;
         }
+
         .fc-button-primary {
-            background-color: #007aff!important;
-            border-color: #007aff!important;
+            background-color: #007aff !important;
+            border-color: #007aff !important;
             font-weight: 500;
         }
+
         .fc-button-primary:hover {
-            background-color: #0056b3!important;
+            background-color: #0056b3 !important;
         }
+
         .fc-day-today {
-            background-color: #e8f4ff!important;
+            background-color: #e8f4ff !important;
         }
+
         .islamic-date {
             font-size: 10px;
             color: #86868b;
             text-align: right;
             padding-right: 5px;
         }
+
         #logoutButton {
             position: fixed;
             top: 20px;
@@ -120,6 +158,7 @@
             font-size: 14px;
             font-weight: 500;
         }
+
         .booking-form {
             display: none;
             position: fixed;
@@ -129,11 +168,13 @@
             background-color: white;
             padding: 25px;
             border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             width: 300px;
         }
-        .booking-form input, .booking-form select {
+
+        .booking-form input,
+        .booking-form select {
             width: 100%;
             padding: 10px;
             margin: 8px 0;
@@ -142,6 +183,7 @@
             font-size: 14px;
             font-family: 'SF Pro Text', sans-serif;
         }
+
         .booking-form button {
             background-color: #007aff;
             color: white;
@@ -154,56 +196,27 @@
             width: 100%;
             margin-top: 10px;
         }
+
         .booking-form button.cancel {
             background-color: #ff3b30;
         }
+
         @media (max-width: 768px) {
             .sidebar {
                 display: none;
             }
+
             #main-content {
                 margin-left: 0;
             }
         }
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        .sidebar.collapsed {
-            transform: translateX(-230px);
-        }
-        #toggleSidebar {
-            position: fixed;
-            left: 250px;
-            top: 10px;
-            z-index: 1000;
-            transition: left 0.3s ease-in-out;
-        }
-        .sidebar.collapsed #toggleSidebar {
-            left: 20px;
-        }
-        #main-content {
-            transition: padding-left 0.3s ease-in-out;
-        }
-        .sidebar.collapsed + #main-content {
-            padding-left: 40px;
-        }
-    
-    document.getElementById('toggleSidebar').addEventListener('click', function() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('collapsed');
-    const mainContent = document.getElementById('main-content');
-    if (sidebar.classList.contains('collapsed')) {
-        mainContent.style.paddingLeft = '40px';
-    } else {
-        mainContent.style.paddingLeft = '270px';
-    }
-});
-    </style>    
+    </style>
 </head>
+
 <body>
     <div class="container">
         <div id="sidebar" class="sidebar">
-            <button id="toggleSidebar">≡</button>            
+            <button id="toggleSidebar">≡</button>
             <h2>Analytics</h2>
             <div class="analytics-card">
                 <h3>Bookings</h3>
@@ -262,7 +275,7 @@
     </div>
     <button id="logoutButton">Logout</button>
 
-    <div id="bookingForm" class="booking-form">       
+    <div id="bookingForm" class="booking-form">
         <input type="text" id="meetingTitle" placeholder="Meeting Title">
         <select id="department">
             <option value="">Select Department</option>
@@ -300,28 +313,28 @@
         let calendar;
         let selectedDate;
 
-      // Customizable Islamic month names
+        // Customizable Islamic month names
         const islamicMonths = [
-            "Muharram", "Safar", "Rabiulawal", "Rabiulakhir",
+            "Muharram", "Safar", "Rabiulaawal", "Rabiulakhir",
             "Jamadilawal", "Jamadilakhir", "Rejab", "Sya'ban",
             "Ramadan", "Syawal", "Zulkaedah", "Zulhijjah"
         ];
 
         // Adjustable offset for Islamic calendar
         let islamicDateOffset = 0;
-       function getIslamicDate(date) {
-    const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
-    const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric'
-    }).format(adjustedDate);
-    const [day, month] = islamicDate.split('/');
-    // Handle cases where month might be undefined
-    const islamicMonthName = islamicMonths[parseInt(month) - 1];
-    return `${day} ${islamicMonthName || 'Undefined'}`;
-}
-        document.addEventListener('DOMContentLoaded', function() {
+
+        function getIslamicDate(date) {
+            const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
+            const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
+                day: 'numeric',
+                month: 'numeric',
+                year: 'numeric'
+            }).format(adjustedDate);
+            const [day, month, year] = islamicDate.split('/');
+            return `${day} ${islamicMonths[parseInt(month) - 1]}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
@@ -334,13 +347,13 @@
                 slotMaxTime: '18:00:00',
                 allDaySlot: false,
                 selectable: true,
-                select: function(info) {
+                select: function (info) {
                     selectedDate = info.start;
                     document.getElementById('startTime').value = info.startStr.slice(11, 16);
                     document.getElementById('endTime').value = info.endStr.slice(11, 16);
                     document.getElementById('bookingForm').style.display = 'block';
                 },
-                eventClick: function(info) {
+                eventClick: function (info) {
                     if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
                         db.ref('events/' + info.event.id).remove().then(() => {
                             info.event.remove();
@@ -348,10 +361,10 @@
                         });
                     }
                 },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    db.ref('events').once('value').then(function(snapshot) {
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    db.ref('events').once('value').then(function (snapshot) {
                         const events = [];
-                        snapshot.forEach(function(childSnapshot) {
+                        snapshot.forEach(function (childSnapshot) {
                             const event = childSnapshot.val();
                             event.id = childSnapshot.key;
                             events.push(event);
@@ -359,16 +372,15 @@
                         successCallback(events);
                     }).catch(failureCallback);
                 },
-               eventContent: function(arg) {
-    const title = arg.event.title.length > 15 ? arg.event.title.substr(0, 15) + '...' : arg.event.title;
-    return {
-        html: `
-            <div class="fc-event-title" title="${arg.event.title}">${title}</div>
-            <div class="fc-event-time">${arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${arg.event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-        `
-    };
-},
-                dayCellDidMount: function(info) {
+                eventContent: function (arg) {
+                    return {
+                        html: `
+                            <div class="fc-event-title">${arg.event.title}</div>
+                            <div class="fc-event-time">${arg.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${arg.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        `
+                    };
+                },
+                dayCellDidMount: function (info) {
                     const islamicDate = getIslamicDate(info.date);
                     const element = info.el.querySelector('.fc-daygrid-day-top');
                     if (element) {
@@ -378,10 +390,10 @@
                         element.appendChild(islamicDateElement);
                     }
                 },
-                datesSet: function(info) {
+                datesSet: function (info) {
                     if (info.view.type === 'timeGridWeek' || info.view.type === 'timeGridDay') {
-                        const dates = info.view.activeStart;
-                        const endDate = info.view.activeEnd;
+                        const dates = new Date(info.view.activeStart);
+                        const endDate = new Date(info.view.activeEnd);
                         while (dates < endDate) {
                             const dayHeader = calendar.el.querySelector(`.fc-col-header-cell[data-date="${dates.toISOString().split('T')[0]}"]`);
                             if (dayHeader) {
@@ -398,7 +410,7 @@
             });
             calendar.render();
             updateAnalytics();
-        });       
+        });
 
         function saveBooking() {
             const title = document.getElementById('meetingTitle').value;
@@ -422,7 +434,7 @@
                     color: getDepartmentColor(department)
                 };
 
-                db.ref('events').push(newEvent).then(function(ref) {
+                db.ref('events').push(newEvent).then(function (ref) {
                     calendar.addEvent(newEvent);
                     closeBookingForm();
                     updateAnalytics();
@@ -454,8 +466,15 @@
             // This should query the Firebase database and update the sidebar with current statistics
         }
 
-         document.getElementById('toggleSidebar').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('toggleSidebar').addEventListener('click', function () {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            const mainContent = document.getElementById('main-content');
+            if (sidebar.classList.contains('collapsed')) {
+                mainContent.style.paddingLeft = '40px'; /* Adjust padding when collapsed */
+            } else {
+                mainContent.style.paddingLeft = '270px'; /* Reset padding when expanded */
+            }
         });
 
         // Function to adjust Islamic calendar offset
@@ -475,7 +494,7 @@
             </div>
         `;
         document.querySelector('.sidebar').insertAdjacentHTML('beforeend', adjustButtons);
-
     </script>
 </body>
+
 </html>
