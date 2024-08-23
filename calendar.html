@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking - Version 4.1</title>
+    <title>DPP Meeting Room Booking - Version 4.2</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hijri-date/hijri-date.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap');
         
@@ -220,7 +221,7 @@
             </div>
         </div>
         <div id="main-content">
-            <h1>DPP Meeting Room Booking - Version 4.1</h1>
+            <h1>DPP Meeting Room Booking - Version 4.2</h1>
             <div id="calendar"></div>
         </div>
     </div>
@@ -243,10 +244,31 @@
     </div>
 
     <script>
-        // Firebase configuration and initialization (keep your existing code)
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+            authDomain: "moh-meeting-room-booking.firebaseapp.com",
+            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "moh-meeting-room-booking",
+            storageBucket: "moh-meeting-room-booking.appspot.com",
+            messagingSenderId: "629503206549",
+            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+            measurementId: "G-MDSDN8ZS5F"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the database service
+        const db = firebase.database();
 
         let calendar;
         let selectedDate;
+
+        function getIslamicDate(date) {
+            const hijriDate = new HijriDate(date);
+            return `${hijriDate.getDate()} ${hijriDate.getMonthName('en')}`;
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
@@ -285,33 +307,19 @@
                     };
                 },
                 dayCellDidMount: function(info) {
-                    getIslamicDate(info.date).then(islamicDate => {
-                        const element = info.el.querySelector('.fc-daygrid-day-top');
-                        if (element) {
-                            const islamicDateElement = document.createElement('div');
-                            islamicDateElement.className = 'islamic-date';
-                            islamicDateElement.textContent = islamicDate;
-                            element.appendChild(islamicDateElement);
-                        }
-                    });
+                    const islamicDate = getIslamicDate(info.date);
+                    const element = info.el.querySelector('.fc-daygrid-day-top');
+                    if (element) {
+                        const islamicDateElement = document.createElement('div');
+                        islamicDateElement.className = 'islamic-date';
+                        islamicDateElement.textContent = islamicDate;
+                        element.appendChild(islamicDateElement);
+                    }
                 }
             });
             calendar.render();
             updateAnalytics();
         });
-
-        async function getIslamicDate(date) {
-            const gregDate = date.toISOString().split('T')[0];
-            try {
-                const response = await fetch(`https://api.aladhan.com/v1/gToH/${gregDate}`);
-                const data = await response.json();
-                const hijri = data.data.hijri;
-                return `${hijri.day} ${hijri.month.en}`;
-            } catch (error) {
-                console.error('Error fetching Islamic date:', error);
-                return '';
-            }
-        }
 
         function saveBooking() {
             const title = document.getElementById('meetingTitle').value;
@@ -330,8 +338,8 @@
 
                 const newEvent = {
                     title: `${title} - ${department}`,
-                    start: startDateTime,
-                    end: endDateTime,
+                    start: startDateTime.toISOString(),
+                    end: endDateTime.toISOString(),
                     color: getDepartmentColor(department)
                 };
 
@@ -364,6 +372,7 @@
 
         function updateAnalytics() {
             // Implement analytics update logic here
+            // This should query the Firebase database and update the sidebar with current statistics
         }
 
         document.getElementById('logoutButton').addEventListener('click', function() {
