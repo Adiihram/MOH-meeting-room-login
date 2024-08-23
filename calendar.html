@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking - Version 4.2</title>
+    <title>DPP Meeting Room Booking - Version 4.3</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hijri-date/hijri-date.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hijri-date@1.2.2/hijri-date.min.js"></script>    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap');
         
@@ -20,20 +20,24 @@
             color: #1d1d1f;
         }
         .container {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            width: 280px;
-            background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            overflow-y: auto;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-        }
+    display: flex;
+    min-height: 100vh;
+}
+.sidebar {
+    width: 250px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+#main-content {
+    flex-grow: 1;
+    padding: 20px 20px 20px 270px;
+}        
         .sidebar h2 {
             font-size: 20px;
             font-weight: 600;
@@ -71,10 +75,7 @@
             font-weight: 500;
             font-size: 14px;
         }
-        #main-content {
-            flex-grow: 1;
-            padding: 20px;
-            margin-left: 280px;
+        
         }
         #calendar {
             background-color: #ffffff;
@@ -234,7 +235,7 @@
             <option value="Department of Medical Services">Department of Medical Services</option>
             <option value="Department of Public Health">Department of Public Health</option>
             <option value="Department of Health Technology">Department of Health Technology</option>
-            <option value="Department of Research and Development">Department of Research and Development</option>
+            <option value="Department of Policy and Planning">Department of Policy and Planning</option>
             <option value="Department of Health Regulation">Department of Health Regulation</option>
         </select>
         <input type="time" id="startTime" required>
@@ -265,58 +266,67 @@
         let calendar;
         let selectedDate;
 
-        function getIslamicDate(date) {
-            const hijriDate = new HijriDate(date);
-            return `${hijriDate.getDate()} ${hijriDate.getMonthName('en')}`;
-        }
-
+       function getIslamicDate(date) {
+    const hijriDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }).format(date);
+    return hijriDate.split(' ').slice(0, 2).join(' ');
+}
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                selectable: true,
-                select: function(info) {
-                    selectedDate = info.start;
-                    document.getElementById('bookingForm').style.display = 'block';
-                },
-                eventClick: function(info) {
-                    // Handle event click (edit/delete functionality)
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    db.ref('events').once('value').then(function(snapshot) {
-                        const events = [];
-                        snapshot.forEach(function(childSnapshot) {
-                            const event = childSnapshot.val();
-                            event.id = childSnapshot.key;
-                            events.push(event);
-                        });
-                        successCallback(events);
-                    }).catch(failureCallback);
-                },
-                eventContent: function(arg) {
-                    return {
-                        html: `
-                            <div class="fc-event-title">${arg.event.title}</div>
-                            <div class="fc-event-time">${arg.timeText}</div>
-                        `
-                    };
-                },
-                dayCellDidMount: function(info) {
-                    const islamicDate = getIslamicDate(info.date);
-                    const element = info.el.querySelector('.fc-daygrid-day-top');
-                    if (element) {
-                        const islamicDateElement = document.createElement('div');
-                        islamicDateElement.className = 'islamic-date';
-                        islamicDateElement.textContent = islamicDate;
-                        element.appendChild(islamicDateElement);
-                    }
-                }
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    slotMinTime: '08:00:00',
+    slotMaxTime: '18:00:00',
+    allDaySlot: false,
+    selectable: true,
+    select: function(info) {
+        selectedDate = info.start;
+        document.getElementById('startTime').value = info.startStr.slice(11, 16);
+        document.getElementById('endTime').value = info.endStr.slice(11, 16);
+        document.getElementById('bookingForm').style.display = 'block';
+    },
+    eventClick: function(info) {
+        // Handle event click (edit/delete functionality)
+        alert('Event: ' + info.event.title);
+    },
+    events: function(fetchInfo, successCallback, failureCallback) {
+        db.ref('events').once('value').then(function(snapshot) {
+            const events = [];
+            snapshot.forEach(function(childSnapshot) {
+                const event = childSnapshot.val();
+                event.id = childSnapshot.key;
+                events.push(event);
             });
+            successCallback(events);
+        }).catch(failureCallback);
+    },
+    eventContent: function(arg) {
+        return {
+            html: `
+                <div class="fc-event-title">${arg.event.title}</div>
+                <div class="fc-event-time">${arg.timeText}</div>
+            `
+        };
+    },
+    dayCellDidMount: function(info) {
+        const islamicDate = getIslamicDate(info.date);
+        const element = info.el.querySelector('.fc-daygrid-day-top');
+        if (element) {
+            const islamicDateElement = document.createElement('div');
+            islamicDateElement.className = 'islamic-date';
+            islamicDateElement.textContent = islamicDate;
+            element.appendChild(islamicDateElement);
+        }
+    }
+});                  
             calendar.render();
             updateAnalytics();
         });
@@ -364,7 +374,7 @@
                 'Department of Medical Services': '#007AFF',
                 'Department of Public Health': '#34C759',
                 'Department of Health Technology': '#FF3B30',
-                'Department of Research and Development': '#FF9500',
+                'Department of Policy and Planning': '#FF9500',
                 'Department of Health Regulation': '#5856D6'
             };
             return colors[department] || '#8E8E93';
