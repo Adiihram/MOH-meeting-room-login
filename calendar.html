@@ -55,10 +55,10 @@
         }
 
         #main-content {
-            flex-grow: 1;
-            padding: 20px 20px 20px 270px;
-            transition: padding-left 0.3s ease-in-out;
-        }
+    flex-grow: 1;
+    padding: 20px 20px 20px 300px; /* Adjusted from 270px to 300px */
+    margin-left: 50px; /* Added margin to create space between sidebar and title */
+}
 
         .sidebar.collapsed + #main-content {
             padding-left: 40px;
@@ -324,15 +324,22 @@
         let islamicDateOffset = 0;
 
         function getIslamicDate(date) {
-            const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
-            const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
-                day: 'numeric',
-                month: 'numeric',
-                year: 'numeric'
-            }).format(adjustedDate);
-            const [day, month, year] = islamicDate.split('/');
-            return `${day} ${islamicMonths[parseInt(month) - 1]}`;
-        }
+    const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
+    const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric'
+    }).format(adjustedDate);
+    const [day, month, year] = islamicDate.split('/');
+    
+    // Ensure month index is within valid range
+    const monthIndex = parseInt(month) - 1;
+    if (monthIndex >= 0 && monthIndex < islamicMonths.length) {
+        return `${day} ${islamicMonths[monthIndex]}`;
+    } else {
+        return `${day} ${month} ${year}`; // Fallback to prevent undefined
+    }
+}
 
         document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
@@ -372,14 +379,18 @@
                         successCallback(events);
                     }).catch(failureCallback);
                 },
-                eventContent: function (arg) {
-                    return {
-                        html: `
-                            <div class="fc-event-title">${arg.event.title}</div>
-                            <div class="fc-event-time">${arg.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${arg.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                        `
-                    };
-                },
+                eventContent: function(arg) {
+    return {
+        html: `
+            <div class="fc-event-title" title="${arg.event.title}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${arg.event.title}
+            </div>
+            <div class="fc-event-time" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${arg.event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </div>
+        `
+    };
+}
                 dayCellDidMount: function (info) {
                     const islamicDate = getIslamicDate(info.date);
                     const element = info.el.querySelector('.fc-daygrid-day-top');
@@ -461,28 +472,48 @@
             return colors[department] || '#8E8E93';
         }
 
-        function updateAnalytics() {
-            // Implement analytics update logic here
-            // This should query the Firebase database and update the sidebar with current statistics
-        }
+       function updateAnalytics() {
+    db.ref('events').once('value').then(function(snapshot) {
+        let dailyBookings = 0;
+        let weeklyBookings = 0;
+        let monthlyBookings = 0;
+        let dailyHours = 0;
+        let weeklyHours = 0;
+        let monthlyHours = 0;
 
-        document.getElementById('toggleSidebar').addEventListener('click', function () {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-            const mainContent = document.getElementById('main-content');
-            if (sidebar.classList.contains('collapsed')) {
-                mainContent.style.paddingLeft = '40px'; /* Adjust padding when collapsed */
-            } else {
-                mainContent.style.paddingLeft = '270px'; /* Reset padding when expanded */
-            }
+        snapshot.forEach(function(childSnapshot) {
+            const event = childSnapshot.val();
+            const eventDate = new Date(event.start);
+
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            if (eventDate >= startOfDay) dailyBookings++;
+            if (eventDate >= startOfWeek) weeklyBookings++;
+            if (eventDate >= startOfMonth) monthlyBookings++;
+
+            const duration = (new Date(event.end) - eventDate) / (1000 * 60 * 60); // Duration in hours
+            if (eventDate >= startOfDay) dailyHours += duration;
+            if (eventDate >= startOfWeek) weeklyHours += duration;
+            if (eventDate >= startOfMonth) monthlyHours += duration;
         });
 
+        document.getElementById('dailyBookings').textContent = dailyBookings;
+        document.getElementById('weeklyBookings').textContent = weeklyBookings;
+        document.getElementById('monthlyBookings').textContent = monthlyBookings;
+        document.getElementById('dailyHours').textContent = dailyHours;
+        document.getElementById('weeklyHours').textContent = weeklyHours;
+        document.getElementById('monthlyHours').textContent = monthlyHours;
+    });
+}
         // Function to adjust Islamic calendar offset
         function adjustIslamicCalendar(days) {
-            islamicDateOffset += days;
-            calendar.refetchEvents();
-            calendar.render();
-        }
+    islamicDateOffset += days;
+    calendar.getCurrentData().dates.render({isForced: true});
+    updateAnalytics(); // Ensure analytics are also updated when dates are adjusted
+}
 
         // Add buttons to adjust Islamic calendar
         const adjustButtons = `
