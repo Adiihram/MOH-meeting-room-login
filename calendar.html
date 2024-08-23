@@ -35,7 +35,8 @@
 }
 #main-content {
     flex-grow: 1;
-    padding: 20px 20px 20px 270px;
+    padding: 20px 20px 20px 270px; /* Keep this as is */
+    transition: padding-left 0.3s ease-in-out; /* Add this line */
 }        
         .sidebar h2 {
             font-size: 20px;
@@ -186,6 +187,17 @@
         .sidebar.collapsed + #main-content {
             padding-left: 40px;
         }
+    
+document.getElementById('toggleSidebar').addEventListener('click', function() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+    const mainContent = document.getElementById('main-content');
+    if (sidebar.classList.contains('collapsed')) {
+        mainContent.style.paddingLeft = '40px';
+    } else {
+        mainContent.style.paddingLeft = '270px';
+    }
+});
     </style>    
 </head>
 <body>
@@ -290,24 +302,25 @@
 
       // Customizable Islamic month names
         const islamicMonths = [
-            "Muharram", "Safar", "Rabiulaawal", "Rabiulakhir",
+            "Muharram", "Safar", "Rabiulawal", "Rabiulakhir",
             "Jamadilawal", "Jamadilakhir", "Rejab", "Sya'ban",
             "Ramadan", "Syawal", "Zulkaedah", "Zulhijjah"
         ];
 
         // Adjustable offset for Islamic calendar
         let islamicDateOffset = 0;
-
-        function getIslamicDate(date) {
-            const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
-            const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
-                day: 'numeric',
-                month: 'numeric',
-                year: 'numeric'
-            }).format(adjustedDate);
-            const [day, month, year] = islamicDate.split('/');
-            return `${day} ${islamicMonths[parseInt(month) - 1]}`;
-        }        
+       function getIslamicDate(date) {
+    const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
+    const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric'
+    }).format(adjustedDate);
+    const [day, month] = islamicDate.split('/');
+    // Handle cases where month might be undefined
+    const islamicMonthName = islamicMonths[parseInt(month) - 1];
+    return `${day} ${islamicMonthName || 'Undefined'}`;
+}
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -346,14 +359,15 @@
                         successCallback(events);
                     }).catch(failureCallback);
                 },
-                eventContent: function(arg) {
-                    return {
-                        html: `
-                            <div class="fc-event-title">${arg.event.title}</div>
-                            <div class="fc-event-time">${arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${arg.event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        `
-                    };
-                },
+               eventContent: function(arg) {
+    const title = arg.event.title.length > 15 ? arg.event.title.substr(0, 15) + '...' : arg.event.title;
+    return {
+        html: `
+            <div class="fc-event-title" title="${arg.event.title}">${title}</div>
+            <div class="fc-event-time">${arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${arg.event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+        `
+    };
+},
                 dayCellDidMount: function(info) {
                     const islamicDate = getIslamicDate(info.date);
                     const element = info.el.querySelector('.fc-daygrid-day-top');
