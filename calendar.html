@@ -333,9 +333,16 @@
 // Call this function after the page loads
         
 document.addEventListener('DOMContentLoaded', function() {
-    checkFirebaseData();        document.addEventListener('DOMContentLoaded', function () {
+    checkFirebaseData();        
+        document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
+            if (!calendarEl) {
+        console.error('Calendar element not found');
+        return;
+    }
+    try {
+        calendar = new FullCalendar.Calendar(calendarEl, 
+        {        
                 initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
@@ -416,9 +423,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            console.log('Calendar object:', calendar);
             calendar.render();
-            updateAnalytics();
+        console.log('Calendar rendered successfully');
+    } catch (error) {
+        console.error('Error initializing calendar:', error);
+    }
+});            updateAnalytics();
         });
 
         function saveBooking() {
