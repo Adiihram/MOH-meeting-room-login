@@ -266,28 +266,33 @@
     <button onclick="closeBookingForm()" class="cancel">Cancel</button>
 </div>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
-            authDomain: "moh-meeting-room-booking.firebaseapp.com",
-            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "moh-meeting-room-booking",
-            storageBucket: "moh-meeting-room-booking.appspot.com",
-            messagingSenderId: "629503206549",
-            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
-            measurementId: "G-MDSDN8ZS5F"
-        };
+   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+        authDomain: "moh-meeting-room-booking.firebaseapp.com",
+        databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "moh-meeting-room-booking",
+        storageBucket: "moh-meeting-room-booking.appspot.com",
+        messagingSenderId: "629503206549",
+        appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+        measurementId: "G-MDSDN8ZS5F"
+    };
 
-        // Initialize Firebase
+    // Initialize Firebase
+    if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
+    } else {
+        firebase.app(); // If already initialized, use that one
+    }
 
-        // Get a reference to the database service
-        const db = firebase.database();
+    // Get a reference to the database service
+    const db = firebase.database();
 
-        let calendar;
-        let selectedDate;
-
+    let calendar;
+    let selectedDate;
+</script>
+    
         // Customizable Islamic month names
         const islamicMonths = [
             "Muharram", "Safar", "Rabiulaawal", "Rabiulakhir",
