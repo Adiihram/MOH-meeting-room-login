@@ -192,7 +192,6 @@
 <body>
     <div class="container">
         <div id="sidebar" class="sidebar">
-            <button id="toggleSidebar">≡</button>
             <h2>Analytics</h2>
             <div class="analytics-card">
                 <h3>Bookings</h3>
@@ -250,22 +249,22 @@
         </div>
     </div>
     <button id="logoutButton">Logout</button>
-
-    <div id="bookingForm" class="booking-form">
-        <input type="text" id="meetingTitle" placeholder="Meeting Title">
-        <select id="department">
-            <option value="">Select Department</option>
-            <option value="Department of Medical Services">Department of Medical Services</option>
-            <option value="Department of Public Health">Department of Public Health</option>
-            <option value="Department of Health Technology">Department of Health Technology</option>
-            <option value="Department of Policy and Planning">Department of Policy and Planning</option>
-            <option value="Department of Health Regulation">Department of Health Regulation</option>
-        </select>
-        <input type="time" id="startTime" required>
-        <input type="time" id="endTime" required>
-        <button onclick="saveBooking()">Save Booking</button>
-        <button onclick="closeBookingForm()" class="cancel">Cancel</button>
-    </div>
+    
+    <div id="bookingForm" class="booking-form" style="display: none;">
+    <input type="text" id="meetingTitle" placeholder="Meeting Title">
+    <select id="department">
+        <option value="">Select Department</option>
+        <option value="Department of Medical Services">Department of Medical Services</option>
+        <option value="Department of Public Health">Department of Public Health</option>
+        <option value="Department of Health Technology">Department of Health Technology</option>
+        <option value="Department of Policy and Planning">Department of Policy and Planning</option>
+        <option value="Department of Health Regulation">Department of Health Regulation</option>
+    </select>
+    <input type="time" id="startTime" required>
+    <input type="time" id="endTime" required>
+    <button onclick="saveBooking()">Save Booking</button>
+    <button onclick="closeBookingForm()" class="cancel">Cancel</button>
+</div>
 
     <script>
         // Firebase configuration
