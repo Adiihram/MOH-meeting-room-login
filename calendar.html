@@ -366,30 +366,31 @@ dayCellDidMount: function (info) {
         element.appendChild(islamicDateElement);
     }
 },
-});
+                
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            initializeCalendar(); // Initialize the calendar first
+            calendar.render(); // Ensure the calendar is rendered before updating the header
+            updateCalendarHeader(); // Update the header with Islamic month
+            console.log('Calendar rendered successfully');
+        } catch (error) {
+            console.error('Error initializing calendar:', error);
+        }
 
-function updateCalendarHeader() {
-    const calendarEl = document.querySelector('.fc-toolbar-title');
-    const gregorianMonthYear = calendarEl.textContent;
+        updateAnalytics(); // Ensure analytics are updated
+    });
 
-    const islamicDate = new Date(); // Current date for Islamic month calculation
-    const islamicMonth = getIslamicDate(islamicDate).split(' ')[1]; // Get the Islamic month name
+    function updateCalendarHeader() {
+        const calendarEl = document.querySelector('.fc-toolbar-title');
+        const gregorianMonthYear = calendarEl.textContent;
 
-    calendarEl.innerHTML = `${gregorianMonthYear} <br> (${islamicMonth})`;
-}
+        const islamicDate = new Date(); // Current date for Islamic month calculation
+        const islamicMonth = getIslamicDate(islamicDate).split(' ')[1]; // Get the Islamic month name
 
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        initializeCalendar(); // Initialize the calendar first
-        calendar.render(); // Ensure the calendar is rendered before updating the header
-        updateCalendarHeader(); // Update the header with Islamic month
-        console.log('Calendar rendered successfully');
-    } catch (error) {
-        console.error('Error initializing calendar:', error);
+        calendarEl.innerHTML = `${gregorianMonthYear} <br> (${islamicMonth})`;
     }
-
-    updateAnalytics(); // Ensure analytics are updated
-});
+</script>
 
     function saveBooking() {
         const title = document.getElementById('meetingTitle').value;
