@@ -347,19 +347,11 @@
                         failureCallback(error);
                     });
                 },
-                eventContent: function(arg) {
-                    return {
-                        html: `
-                            <div class="fc-event-title" title="${arg.event.title}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${arg.event.title}
-                            </div>
-                            <div class="fc-event-time" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${arg.event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </div>
-                        `
-                    };
-                },
-                dayCellDidMount: function (info) {
+               eventContent: function(arg) {
+  return {
+    html: `<div class="fc-event-title">${arg.event.title}</div>`
+  };
+},                dayCellDidMount: function (info) {
                     const islamicDate = getIslamicDate(info.date);
                     const element = info.el.querySelector('.fc-daygrid-day-top');
                     if (element) {
