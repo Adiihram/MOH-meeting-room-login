@@ -354,18 +354,20 @@
                eventContent: function(arg) {
   return {
     html: `<div class="fc-event-title">${arg.event.title}</div>`
-  };
-},                dayCellDidMount: function (info) {
-                    const islamicDate = getIslamicDate(info.date);
-                    const element = info.el.querySelector('.fc-daygrid-day-top');
-                    if (element) {
-                        const islamicDateElement = document.createElement('div');
-                        islamicDateElement.className = 'islamic-date';
-                        islamicDateElement.textContent = islamicDate;
-                        element.appendChild(islamicDateElement);
-                    }
-                },
-             function updateCalendarHeader() {
+};
+},
+dayCellDidMount: function (info) {
+    const islamicDate = getIslamicDate(info.date);
+    const element = info.el.querySelector('.fc-daygrid-day-top');
+    if (element) {
+        const islamicDateElement = document.createElement('div');
+        islamicDateElement.className = 'islamic-date';
+        islamicDateElement.textContent = islamicDate;
+        element.appendChild(islamicDateElement);
+    }
+}
+
+function updateCalendarHeader() {
     const calendarEl = document.querySelector('.fc-toolbar-title');
     const gregorianMonthYear = calendarEl.textContent;
 
@@ -385,16 +387,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Error initializing calendar:', error);
     }
 });
-
-function updateCalendarHeader() {
-    const calendarEl = document.querySelector('.fc-toolbar-title');
-    const gregorianMonthYear = calendarEl.textContent;
-
-    const islamicDate = new Date(); // Current date for Islamic month calculation
-    const islamicMonth = getIslamicDate(islamicDate).split(' ')[1]; // Get the Islamic month name
-
-    calendarEl.innerHTML = `${gregorianMonthYear} <br> (${islamicMonth})`;
-}
       
         updateAnalytics();
     }
