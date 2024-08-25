@@ -154,6 +154,10 @@
         .booking-form button.cancel {
             background-color: #ff3b30;
         }
+        .islamic-month {
+         font-size: 0.8em;
+         color: #666;
+        }    
     </style>
 </head>
 <body>
@@ -361,25 +365,12 @@
                         element.appendChild(islamicDateElement);
                     }
                 },
-               datesSet: function (info) {
-                    if (info.view.type === 'timeGridWeek' || info.view.type === 'timeGridDay') {
-                        const dates = new Date(info.view.activeStart);
-                        const endDate = new Date(info.view.activeEnd);
-                        while (dates < endDate) {
-                            const dayHeader = calendar.el.querySelector(`.fc-col-header-cell[data-date="${dates.toISOString().split('T')[0]}"]`);
-                            if (dayHeader) {
-                                const islamicDate = getIslamicDate(dates);
-                                const islamicDateElement = document.createElement('div');
-                                islamicDateElement.className = 'islamic-date';
-                                islamicDateElement.textContent = islamicDate;
-                                dayHeader.appendChild(islamicDateElement);
-                            }
-                            dates.setDate(dates.getDate() + 1);
-                        }
-                    }
-                }
-            });
-            
+               datesSet: function(info) {
+  var date = info.view.currentStart;
+  var islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {month: 'long'}).format(date);
+  var headerEl = document.querySelector('.fc-toolbar-title');
+  headerEl.innerHTML += `<br><span class="islamic-month">${islamicDate}</span>`;
+},            
             calendar.render();
             console.log('Calendar rendered successfully');
         } catch (error) {
