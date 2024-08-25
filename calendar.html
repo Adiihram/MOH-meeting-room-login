@@ -296,8 +296,17 @@
                 console.error('Error connecting to Firebase:', error);
             });
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
+    dayCellDidMount: function (info) {
+    const islamicDate = getIslamicDate(info.date);
+    const element = info.el.querySelector('.fc-daygrid-day-top');
+    if (element) {
+        const islamicDateElement = document.createElement('div');
+        islamicDateElement.className = 'islamic-date';
+        islamicDateElement.textContent = islamicDate;
+        element.appendChild(islamicDateElement);
+    }
+},     
+        document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM fully loaded');
         checkFirebaseData();
         initializeCalendar();
@@ -356,7 +365,8 @@
     html: `<div class="fc-event-title">${arg.event.title}</div>`
 };
 },
-dayCellDidMount: function (info) {
+
+    dayCellDidMount: function (info) {
     const islamicDate = getIslamicDate(info.date);
     const element = info.el.querySelector('.fc-daygrid-day-top');
     if (element) {
@@ -380,7 +390,7 @@ dayCellDidMount: function (info) {
         updateAnalytics(); // Ensure analytics are updated
     });
 
-    function updateCalendarHeader() {
+        function updateCalendarHeader() {
         const calendarEl = document.querySelector('.fc-toolbar-title');
         const gregorianMonthYear = calendarEl.textContent;
 
