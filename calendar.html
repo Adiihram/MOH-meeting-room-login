@@ -260,85 +260,86 @@
             .catch(function(error) {
                 console.error('Error connecting to Firebase:', error);
             });
-    }
-
+   
     function initializeCalendar() {
-        const calendarEl = document.getElementById('calendar');
-        if (!calendarEl) {
-            console.error('Calendar element not found');
-            return;
-        }
-        
-        try {
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                slotMinTime: '08:00:00',
-                slotMaxTime: '18:00:00',
-                allDaySlot: false,
-                selectable: true,
-                select: function (info) {
-                    selectedDate = info.start;
-                    document.getElementById('startTime').value = info.startStr.slice(11, 16);
-                    document.getElementById('endTime').value = info.endStr.slice(11, 16);
-                    document.getElementById('bookingForm').style.display = 'block';
-                },
-                eventClick: function (info) {
-                    if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
-                        db.ref('events/' + info.event.id).remove().then(() => {
-                            info.event.remove();
-                            updateAnalytics();
-                        });
-                    }
-                },
-                events: function (fetchInfo, successCallback, failureCallback) {
-                    db.ref('events').once('value').then(function (snapshot) {
-                        const events = [];
-                        snapshot.forEach(function (childSnapshot) {
-                            const event = childSnapshot.val();
-                            event.id = childSnapshot.key;
-                            events.push(event);
-                        });
-                        console.log('Events loaded:', events);
-                        successCallback(events);
-                    }).catch(error => {
-                        console.error('Error fetching events:', error);
-                        failureCallback(error);
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) {
+        console.error('Calendar element not found');
+        return;
+    }
+    
+    try {
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            slotMinTime: '08:00:00',
+            slotMaxTime: '18:00:00',
+            allDaySlot: false,
+            selectable: true,
+            select: function (info) {
+                selectedDate = info.start;
+                document.getElementById('startTime').value = info.startStr.slice(11, 16);
+                document.getElementById('endTime').value = info.endStr.slice(11, 16);
+                document.getElementById('bookingForm').style.display = 'block';
+            },
+            eventClick: function (info) {
+                if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
+                    db.ref('events/' + info.event.id).remove().then(() => {
+                        info.event.remove();
+                        updateAnalytics();
                     });
-                },
-                eventContent: function(arg) {
-                    return {
-                        html: `<div class="fc-event-title">${arg.event.title}</div>`
-                    };
-                },
-
-    function saveBooking() {
-        const title = document.getElementById('meetingTitle').value;
-        const department = document.getElementById('department').value;
-        const startTime = document.getElementById('startTime').value;
-        const endTime = document.getElementById('endTime').value;
-
-        if (title && department && startTime && endTime) {
-            const startDateTime = new Date(selectedDate);
-            const [startHours, startMinutes] = startTime.split(':');
-            startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
-
-            const endDateTime = new Date(selectedDate);
-            const [endHours, endMinutes] = endTime.split(':');
-            endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
-
-            const newEvent = {
-                title: `${title} - ${department}`,
-                start: startDateTime.toISOString(),
-                end: endDateTime.toISOString(),
-                color: getDepartmentColor(department)
-            };
-
-            db.ref('events').push(newEvent).then(function (ref) {
+                }
+            },
+            events: function (fetchInfo, successCallback, failureCallback) {
+                db.ref('events').once('value').then(function (snapshot) {
+                    const events = [];
+                    snapshot.forEach(function (childSnapshot) {
+                        const event = childSnapshot.val();
+                        event.id = childSnapshot.key;
+                        events.push(event);
+                    });
+                    console.log('Events loaded:', events);
+                    successCallback(events);
+                }).catch(error => {
+                    console.error('Error fetching events:', error);
+                    failureCallback(error);
+                });
+            },
+            eventContent: function(arg) {
+                return {
+                    html: `<div class="fc-event-title">${arg.event.title}</div>`
+                };
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing calendar:', error);
+    }
+}
+function saveBooking() {
+    const title = document.getElementById('meetingTitle').value;
+    const department = document.getElementById('department').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    if (title && department && startTime && endTime) {
+        const startDateTime = new Date(selectedDate);
+        const [startHours, startMinutes] = startTime.split(':');
+        startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
+        const endDateTime = new Date(selectedDate);
+        const [endHours, endMinutes] = endTime.split(':');
+        endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
+        const newEvent = {
+            title: `${title} - ${department}`,
+            start: startDateTime.toISOString(),
+            end: endDateTime.toISOString(),
+            color: getDepartmentColor(department)
+        };
+        // Add code here to save the event to the database and update the calendar
+    }
+}            db.ref('events').push(newEvent).then(function (ref) {
                 calendar.addEvent(newEvent);
                 closeBookingForm();
                 updateAnalytics();
