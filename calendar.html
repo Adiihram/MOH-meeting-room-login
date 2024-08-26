@@ -71,14 +71,12 @@
             font-weight: 500;
             font-size: 14px;
         }
-        #calendar {
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            width: 100%;
-            height: 800px;
-            min-height: 600px;
+       #calendar {
+    height: 650px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
         }
         .fc-header-toolbar {
             margin-bottom: 1.5em!important;
@@ -269,6 +267,7 @@
     }
     
     try {
+        console.log('Initializing calendar...');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: {
@@ -280,13 +279,11 @@
             slotMaxTime: '18:00:00',
             allDaySlot: false,
             selectable: true,
+            height: 'auto', // This allows the calendar to fit its container
             select: function (info) {
-                selectedDate = info.start;
-                document.getElementById('startTime').value = info.startStr.slice(11, 16);
-                document.getElementById('endTime').value = info.endStr.slice(11, 16);
-                document.getElementById('bookingForm').style.display = 'block';
+                // ... (rest of the select function)
             },
-            eventClick: function (info) {
+eventClick: function (info) {
                 if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
                     db.ref('events/' + info.event.id).remove().then(() => {
                         info.event.remove();
@@ -294,7 +291,7 @@
                     });
                 }
             },
-            events: function (fetchInfo, successCallback, failureCallback) {
+events: function (fetchInfo, successCallback, failureCallback) {
                 db.ref('events').once('value').then(function (snapshot) {
                     const events = [];
                     snapshot.forEach(function (childSnapshot) {
@@ -319,6 +316,7 @@
         console.error('Error initializing calendar:', error);
     }
 }
+
 function saveBooking() {
     const title = document.getElementById('meetingTitle').value;
     const department = document.getElementById('department').value;
