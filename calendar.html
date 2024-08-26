@@ -405,18 +405,17 @@ function saveBooking() {
         });
    
     document.addEventListener('DOMContentLoaded', function() {
-        try {
-            initializeCalendar(); // Initialize the calendar first
-            calendar.render(); // Ensure the calendar is rendered before updating the header
-            console.log('Calendar rendered successfully');
-        } catch (error) {
-            console.error('Error initializing calendar:', error);
-        }
-
-        updateAnalytics(); // Ensure analytics are updated
-    });
-    }
-    </script>
+    console.log('DOM fully loaded and parsed');
+    checkFirebaseData();
+    initializeCalendar(); // Initialize the calendar first
+    console.log('Rendering calendar...');
+    calendar.render(); // Ensure the calendar is rendered
+    console.log('Calendar render called');
+    updateAnalytics(); // Ensure analytics are updated
+    console.log('Calendar setup complete');
+});
+}
+</script>
 </body>
 </html>
 
