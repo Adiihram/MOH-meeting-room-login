@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking - Version 4.9</title>
+    <title>DPP Meeting Room Booking - Version 5</title>
     <script src="/MOH-meeting-room-login/lib/fullcalendar/index.global.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -97,12 +97,7 @@
         }
         .fc-day-today {
             background-color: #e8f4ff!important;
-        }
-        .islamic-date {
-            font-size: 10px;
-            color: #86868b;
-            text-align: right;
-            padding-right: 5px;
+    
         }
         #logoutButton {
             position: fixed;
@@ -153,10 +148,7 @@
         }
         .booking-form button.cancel {
             background-color: #ff3b30;
-        }
-        .islamic-month {
-         font-size: 0.8em;
-         color: #666;
+    
         }    
     </style>
 </head>
@@ -215,7 +207,7 @@
             </div>
         </div>
         <div id="main-content">
-            <h1>DPP Meeting Room Booking - Version 4.9</h1>
+            <h1>DPP Meeting Room Booking - Version 5</h1>
             <div id="calendar"></div>        
         </div>
     </div>
@@ -258,33 +250,6 @@
 
     let calendar;
     let selectedDate;
-
-    // Customizable Islamic month names
-    const islamicMonths = [
-        "Muharram", "Safar", "Rabiulaawal", "Rabiulakhir",
-        "Jamadilawal", "Jamadilakhir", "Rejab", "Sya'ban",
-        "Ramadan", "Syawal", "Zulkaedah", "Zulhijjah"
-    ];
-
-    // Adjustable offset for Islamic calendar
-    let islamicDateOffset = 0;
-
-    function getIslamicDate(date) {
-        const adjustedDate = new Date(date.getTime() + islamicDateOffset * 24 * 60 * 60 * 1000);
-        const islamicDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
-            day: 'numeric',
-            month: 'numeric',
-            year: 'numeric'
-        }).format(adjustedDate);
-        const [day, month, year] = islamicDate.split('/');
-        
-        const monthIndex = parseInt(month) - 1;
-        if (monthIndex >= 0 && monthIndex < islamicMonths.length) {
-            return `${day} ${islamicMonths[monthIndex]}`;
-        } else {
-            return `${day} ${month} ${year}`;
-        }
-    }
 
     function checkFirebaseData() {
         db.ref('events').once('value')
@@ -350,31 +315,6 @@
                         html: `<div class="fc-event-title">${arg.event.title}</div>`
                     };
                 },
-                dayCellDidMount: function (info) {
-                    const islamicDate = getIslamicDate(info.date);
-                    const element = info.el.querySelector('.fc-daygrid-day-top');
-                    if (element) {
-                        const islamicDateElement = document.createElement('div');
-                        islamicDateElement.className = 'islamic-date';
-                        islamicDateElement.textContent = islamicDate;
-                        element.appendChild(islamicDateElement);
-                    }
-                }
-            });
-        } catch (error) {
-            console.error('Error initializing calendar:', error);
-        }
-    }
-
-    function updateCalendarHeader() {
-        const calendarEl = document.querySelector('.fc-toolbar-title');
-        if (calendarEl) {
-            const gregorianMonthYear = calendarEl.textContent;
-            const islamicDate = new Date(); // Current date for Islamic month calculation
-            const islamicMonth = getIslamicDate(islamicDate).split(' ')[1]; // Get the Islamic month name
-            calendarEl.innerHTML = `${gregorianMonthYear} <br> (${islamicMonth})`;
-        }
-    }
 
     function saveBooking() {
         const title = document.getElementById('meetingTitle').value;
@@ -464,30 +404,11 @@
         }).catch(function(error) {
             console.error("Error updating analytics:", error);
         });
-    }
-
-    function adjustIslamicCalendar(days) {
-        islamicDateOffset += days;
-        calendar.render();
-        updateAnalytics();
-    }
-
-    // Add buttons to adjust Islamic calendar
-    const adjustButtons = `
-        <div>
-            <button onclick="adjustIslamicCalendar(-2)">-2 Days</button>
-            <button onclick="adjustIslamicCalendar(-1)">-1 Day</button>
-            <button onclick="adjustIslamicCalendar(1)">+1 Day</button>
-            <button onclick="adjustIslamicCalendar(2)">+2 Days</button>
-        </div>
-    `;
-    document.querySelector('.sidebar').insertAdjacentHTML('beforeend', adjustButtons);
-
+   
     document.addEventListener('DOMContentLoaded', function() {
         try {
             initializeCalendar(); // Initialize the calendar first
             calendar.render(); // Ensure the calendar is rendered before updating the header
-            updateCalendarHeader(); // Update the header with Islamic month
             console.log('Calendar rendered successfully');
         } catch (error) {
             console.error('Error initializing calendar:', error);
