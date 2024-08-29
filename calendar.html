@@ -1,14 +1,13 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPP Meeting Room Booking - Version 5</title>
-    <script src="/MOH-meeting-room-login/lib/fullcalendar/index.global.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>DPP Meeting Room Booking - Version 5.1</title>
     <style>
-        body {
+body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -154,6 +153,7 @@
     <div class="container">
         <div id="sidebar" class="sidebar">
             <h2>Analytics</h2>
+
             <div class="analytics-card">
                 <h3>Bookings</h3>
                 <div class="analytics-item">
@@ -172,6 +172,7 @@
                     <span id="monthlyBookings" class="analytics-value">0</span>
                 </div>
             </div>
+
             <div class="analytics-card">
                 <h3>Hours Booked</h3>
                 <div class="analytics-item">
@@ -190,6 +191,7 @@
                     <span id="monthlyHours" class="analytics-value">0</span>
                 </div>
             </div>
+
             <div class="analytics-card">
                 <h3>Availability</h3>
                 <div class="analytics-item">
@@ -204,31 +206,30 @@
                 </div>
             </div>
         </div>
+
         <div id="main-content">
             <h1>DPP Meeting Room Booking - Version 5</h1>
-            <div id="calendar"></div>        
+            <div id="calendar"></div>
         </div>
     </div>
+
     <button id="logoutButton">Logout</button>
-    
+
     <div id="bookingForm" class="booking-form" style="display: none;">
-        <input type="text" id="meetingTitle" placeholder="Meeting Title">
-        <select id="department">
-            <option value="">Select Department</option>
-            <option value="Department of Medical Services">Department of Medical Services</option>
-            <option value="Department of Public Health">Department of Public Health</option>
-            <option value="Department of Health Technology">Department of Health Technology</option>
-            <option value="Department of Policy and Planning">Department of Policy and Planning</option>
-            <option value="Department of Health Regulation">Department of Health Regulation</option>
+        <label for="departmentSelect">Select Department</label>
+        <select id="departmentSelect">
+            <option>Department of Medical Services</option>
+            <option>Department of Public Health</option>
+            <option>Department of Health Technology</option>
+            <option>Department of Policy and Planning</option>
+            <option>Department of Health Regulation</option>
         </select>
-        <input type="time" id="startTime" required>
-        <input type="time" id="endTime" required>
-        <button onclick="saveBooking()">Save Booking</button>
-        <button onclick="closeBookingForm()" class="cancel">Cancel</button>
+        <button id="saveBooking">Save Booking</button>
+        <button id="cancelBooking">Cancel</button>
     </div>
 
     <script>
-    // Firebase configuration
+         // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
         authDomain: "moh-meeting-room-booking.firebaseapp.com",
@@ -415,11 +416,6 @@ function saveBooking() {
     console.log('Calendar setup complete');
 });
 }
-</script>
+    </script>
 </body>
 </html>
-
-
-
-
-
