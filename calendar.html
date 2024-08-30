@@ -8,7 +8,9 @@
     <title>DPP Meeting Room Booking - Version 5.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="lib/fullcalendar/index.global.min.js"></script>    
+    <script src="lib/fullcalendar/index.global.min.js"></script>
+    <script>console.log('FullCalendar object:', typeof FullCalendar !== 'undefined' ? 'Loaded' : 'Not loaded');
+    </script>    
     <style>
     body {
             font-family: Arial, sans-serif;
@@ -416,7 +418,10 @@ function saveBooking() {
       initialView: 'dayGridMonth'
     });
     calendar.render();
-  });
+        } else {
+      console.error('Calendar element not found');
+    } 
+    });
     </script>
 </body>
 </html>
