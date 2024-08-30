@@ -23,12 +23,26 @@ body {
     position: fixed;
     left: 0;
     top: 0;
+    z-index: 1000; /*added to fix header*/
 }
 
 #main-content {
+
     flex-grow: 1;
-    padding: 20px 20px 20px 270px;
+    padding: 20px;
+    padding-left: 270px; /* Ensure there's enough space to the left for the sidebar */
+    box-sizing: border-box;    
+    /*flex-grow: 1;
+    padding: 20px 20px 20px 270px;*/    /*removed to fix header*/
 }
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}/*added to fix header*/
 
 h1, h2, h3 {
     font-weight: 600;
