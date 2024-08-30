@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,10 +7,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="lib/fullcalendar/index.global.min.js"></script>
-    <script>console.log('FullCalendar object:', typeof FullCalendar !== 'undefined' ? 'Loaded' : 'Not loaded');
-    </script>    
     <style>
-    body {
+        body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -75,12 +71,12 @@
             font-weight: 500;
             font-size: 14px;
         }
-       #calendar {
-    height: 650px;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 20px;
+        #calendar {
+            height: 650px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
         }
         .fc-header-toolbar {
             margin-bottom: 1.5em!important;
@@ -99,7 +95,6 @@
         }
         .fc-day-today {
             background-color: #e8f4ff!important;
-    
         }
         #logoutButton {
             position: fixed;
@@ -150,7 +145,6 @@
         }
         .booking-form button.cancel {
             background-color: #ff3b30;
-    
         }    
     </style>
 </head>
@@ -221,207 +215,219 @@
     <button id="logoutButton">Logout</button>
 
     <div id="bookingForm" class="booking-form" style="display: none;">
-        <label for="departmentSelect">Select Department</label>
-        <select id="departmentSelect">
+        <label for="meetingTitle">Meeting Title</label>
+        <input type="text" id="meetingTitle" required>
+        <label for="department">Select Department</label>
+        <select id="department">
             <option>Department of Medical Services</option>
             <option>Department of Public Health</option>
             <option>Department of Health Technology</option>
             <option>Department of Policy and Planning</option>
             <option>Department of Health Regulation</option>
         </select>
+        <label for="startTime">Start Time</label>
+        <input type="time" id="startTime" required>
+        <label for="endTime">End Time</label>
+        <input type="time" id="endTime" required>
         <button id="saveBooking">Save Booking</button>
-        <button id="cancelBooking">Cancel</button>
+        <button id="cancelBooking" class="cancel">Cancel</button>
     </div>
 
     <script>
-         // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
-        authDomain: "moh-meeting-room-booking.firebaseapp.com",
-        databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "moh-meeting-room-booking",
-        storageBucket: "moh-meeting-room-booking.appspot.com",
-        messagingSenderId: "629503206549",
-        appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
-        measurementId: "G-MDSDN8ZS5F"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-
-    // Get a reference to the database service
-    const db = firebase.database();
-
-    let calendar;
-    let selectedDate;
-
-    function checkFirebaseData() {
-        db.ref('events').once('value')
-            .then(function(snapshot) {
-                console.log('Firebase connection successful');
-                console.log('Raw Firebase data:', snapshot.val());
-            })
-            .catch(function(error) {
-                console.error('Error connecting to Firebase:', error);
-            });
-   
-    function initializeCalendar() {
-    const calendarEl = document.getElementById('calendar');
-    if (!calendarEl) {
-        console.error('Calendar element not found');
-        return;
-    }
-    
-    try {
-        console.log('Initializing calendar...');
-        calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            slotMinTime: '08:00:00',
-            slotMaxTime: '18:00:00',
-            allDaySlot: false,
-            selectable: true,
-            height: 'auto', // This allows the calendar to fit its container
-            select: function (info) {
-                // ... (rest of the select function)
-            },
-eventClick: function (info) {
-                if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
-                    db.ref('events/' + info.event.id).remove().then(() => {
-                        info.event.remove();
-                        updateAnalytics();
-                    });
-                }
-            },
-events: function (fetchInfo, successCallback, failureCallback) {
-                db.ref('events').once('value').then(function (snapshot) {
-                    const events = [];
-                    snapshot.forEach(function (childSnapshot) {
-                        const event = childSnapshot.val();
-                        event.id = childSnapshot.key;
-                        events.push(event);
-                    });
-                    console.log('Events loaded:', events);
-                    successCallback(events);
-                }).catch(error => {
-                    console.error('Error fetching events:', error);
-                    failureCallback(error);
-                });
-            },
-            eventContent: function(arg) {
-                return {
-                    html: `<div class="fc-event-title">${arg.event.title}</div>`
-                };
-            }
-        });
-    } catch (error) {
-        console.error('Error initializing calendar:', error);
-    }
-}
-
-function saveBooking() {
-    const title = document.getElementById('meetingTitle').value;
-    const department = document.getElementById('department').value;
-    const startTime = document.getElementById('startTime').value;
-    const endTime = document.getElementById('endTime').value;
-    if (title && department && startTime && endTime) {
-        const startDateTime = new Date(selectedDate);
-        const [startHours, startMinutes] = startTime.split(':');
-        startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
-        const endDateTime = new Date(selectedDate);
-        const [endHours, endMinutes] = endTime.split(':');
-        endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
-        const newEvent = {
-            title: `${title} - ${department}`,
-            start: startDateTime.toISOString(),
-            end: endDateTime.toISOString(),
-            color: getDepartmentColor(department)
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+            authDomain: "moh-meeting-room-booking.firebaseapp.com",
+            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "moh-meeting-room-booking",
+            storageBucket: "moh-meeting-room-booking.appspot.com",
+            messagingSenderId: "629503206549",
+            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+            measurementId: "G-MDSDN8ZS5F"
         };
-        // Add code here to save the event to the database and update the calendar
-    }
-}            db.ref('events').push(newEvent).then(function (ref) {
-                calendar.addEvent(newEvent);
-                closeBookingForm();
-                updateAnalytics();
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the database service
+        const db = firebase.database();
+
+        let calendar;
+        let selectedDate;
+
+        function checkFirebaseData() {
+            db.ref('events').once('value')
+                .then(function(snapshot) {
+                    console.log('Firebase connection successful');
+                    console.log('Raw Firebase data:', snapshot.val());
+                })
+                .catch(function(error) {
+                    console.error('Error connecting to Firebase:', error);
+                });
+        }
+
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) {
+                console.error('Calendar element not found');
+                return;
+            }
+
+            try {
+                console.log('Initializing calendar...');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    slotMinTime: '08:00:00',
+                    slotMaxTime: '18:00:00',
+                    allDaySlot: false,
+                    selectable: true,
+                    height: 'auto',
+                    select: function (info) {
+                        selectedDate = info.start;
+                        document.getElementById('bookingForm').style.display = 'block';
+                    },
+                    eventClick: function (info) {
+                        if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
+                            db.ref('events/' + info.event.id).remove().then(() => {
+                                info.event.remove();
+                                updateAnalytics();
+                            });
+                        }
+                    },
+                    events: function (fetchInfo, successCallback, failureCallback) {
+                        db.ref('events').once('value').then(function (snapshot) {
+                            const events = [];
+                            snapshot.forEach(function (childSnapshot) {
+                                const event = childSnapshot.val();
+                                event.id = childSnapshot.key;
+                                events.push(event);
+                            });
+                            console.log('Events loaded:', events);
+                            successCallback(events);
+                        }).catch(error => {
+                            console.error('Error fetching events:', error);
+                            failureCallback(error);
+                        });
+                    },
+                    eventContent: function(arg) {
+                        return {
+                            html: `<div class="fc-event-title">${arg.event.title}</div>`
+                        };
+                    }
+                });
+                calendar.render();
+            } catch (error) {
+                console.error('Error initializing calendar:', error);
+            }
+        }
+
+        function saveBooking() {
+            const title = document.getElementById('meetingTitle').value;
+            const department = document.getElementById('department').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            if (title && department && startTime && endTime) {
+                const startDateTime = new Date(selectedDate);
+                const [startHours, startMinutes] = startTime.split(':');
+                startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
+                const endDateTime = new Date(selectedDate);
+                const [endHours, endMinutes] = endTime.split(':');
+                endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
+                const newEvent = {
+                    title: `${title} - ${department}`,
+                    start: startDateTime.toISOString(),
+                    end: endDateTime.toISOString(),
+                    color: getDepartmentColor(department)
+                };
+                db.ref('events').push(newEvent).then(function (ref) {
+                    calendar.addEvent(newEvent);
+                    closeBookingForm();
+                    updateAnalytics();
+                }).catch(function(error) {
+                    console.error("Error saving booking:", error);
+                });
+            }
+        }
+
+        function closeBookingForm() {
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('meetingTitle').value = '';
+            document.getElementById('department').value = '';
+            document.getElementById('startTime').value = '';
+            document.getElementById('endTime').value = '';
+        }
+
+        function getDepartmentColor(department) {
+            const colors = {
+                'Department of Medical Services': '#007AFF',
+                'Department of Public Health': '#34C759',
+                'Department of Health Technology': '#FF3B30',
+                'Department of Policy and Planning': '#FF9500',
+                'Department of Health Regulation': '#5856D6'
+            };
+            return colors[department] || '#8E8E93';
+        }
+
+        function updateAnalytics() {
+            db.ref('events').once('value').then(function(snapshot) {
+                let dailyBookings = 0;
+                let weeklyBookings = 0;
+                let monthlyBookings = 0;
+                let dailyHours = 0;
+                let weeklyHours = 0;
+                let monthlyHours = 0;
+
+                snapshot.forEach(function(childSnapshot) {
+                    const event = childSnapshot.val();
+                    const eventDate = new Date(event.start);
+
+                    const now = new Date();
+                    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                    if (eventDate >= startOfDay) dailyBookings++;
+                    if (eventDate >= startOfWeek) weeklyBookings++;
+                    if (eventDate >= startOfMonth) monthlyBookings++;
+
+                    const duration = (new Date(event.end) - eventDate) / (1000 * 60 * 60); // Duration in hours
+                    if (eventDate >= startOfDay) dailyHours += duration;
+                    if (eventDate >= startOfWeek) weeklyHours += duration;
+                    if (eventDate >= startOfMonth) monthlyHours += duration;
+                });
+
+                document.getElementById('dailyBookings').textContent = dailyBookings;
+                document.getElementById('weeklyBookings').textContent = weeklyBookings;
+                document.getElementById('monthlyBookings').textContent = monthlyBookings;
+                document.getElementById('dailyHours').textContent = dailyHours.toFixed(2);
+                document.getElementById('weeklyHours').textContent = weeklyHours.toFixed(2);
+                document.getElementById('monthlyHours').textContent = monthlyHours.toFixed(2);
             }).catch(function(error) {
-                console.error("Error saving booking:", error);
+                console.error("Error updating analytics:", error);
             });
         }
-    
 
-    function closeBookingForm() {
-        document.getElementById('bookingForm').style.display = 'none';
-        document.getElementById('meetingTitle').value = '';
-        document.getElementById('department').value = '';
-        document.getElementById('startTime').value = '';
-        document.getElementById('endTime').value = '';
-    }
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('FullCalendar object:', typeof FullCalendar !== 'undefined' ? 'Loaded' : 'Not loaded');
+            checkFirebaseData();
+            initializeCalendar();
+            updateAnalytics();
 
-    function getDepartmentColor(department) {
-        const colors = {
-            'Department of Medical Services': '#007AFF',
-            'Department of Public Health': '#34C759',
-            'Department of Health Technology': '#FF3B30',
-            'Department of Policy and Planning': '#FF9500',
-            'Department of Health Regulation': '#5856D6'
-        };
-        return colors[department] || '#8E8E93';
-    }
+            // Event listeners for booking form
+            document.getElementById('saveBooking').addEventListener('click', saveBooking);
+            document.getElementById('cancelBooking').addEventListener('click', closeBookingForm);
 
-    function updateAnalytics() {
-        db.ref('events').once('value').then(function(snapshot) {
-            let dailyBookings = 0;
-            let weeklyBookings = 0;
-            let monthlyBookings = 0;
-            let dailyHours = 0;
-            let weeklyHours = 0;
-            let monthlyHours = 0;
-
-            snapshot.forEach(function(childSnapshot) {
-                const event = childSnapshot.val();
-                const eventDate = new Date(event.start);
-
-                const now = new Date();
-                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-                if (eventDate >= startOfDay) dailyBookings++;
-                if (eventDate >= startOfWeek) weeklyBookings++;
-                if (eventDate >= startOfMonth) monthlyBookings++;
-
-                const duration = (new Date(event.end) - eventDate) / (1000 * 60 * 60); // Duration in hours
-                if (eventDate >= startOfDay) dailyHours += duration;
-                if (eventDate >= startOfWeek) weeklyHours += duration;
-                if (eventDate >= startOfMonth) monthlyHours += duration;
+            // Event listener for logout button
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                // Implement logout functionality here
+                console.log('Logout clicked');
             });
-
-            document.getElementById('dailyBookings').textContent = dailyBookings;
-            document.getElementById('weeklyBookings').textContent = weeklyBookings;
-            document.getElementById('monthlyBookings').textContent = monthlyBookings;
-            document.getElementById('dailyHours').textContent = dailyHours.toFixed(2);
-            document.getElementById('weeklyHours').textContent = weeklyHours.toFixed(2);
-            document.getElementById('monthlyHours').textContent = monthlyHours.toFixed(2);
-        }).catch(function(error) {
-            console.error("Error updating analytics:", error);
         });
-   
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    console.log('FullCalendar object:', FullCalendar);
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth'
-    });
-    calendar.render();
-        } else {
-      console.error('Calendar element not found');
-    } 
-    });
     </script>
 </body>
 </html>
