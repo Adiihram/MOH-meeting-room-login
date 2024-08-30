@@ -8,9 +8,9 @@
     <title>DPP Meeting Room Booking - Version 5.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="/MOH-meeting-room-login/lib/fullcalendar/index.global.min.js" rel="stylesheet">
+    <script src="/MOH-meeting-room-login/lib/fullcalendar/index.global.js"></script>   
     <style>
-body {
+    body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -408,17 +408,14 @@ function saveBooking() {
             console.error("Error updating analytics:", error);
         });
    
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded and parsed');
-    checkFirebaseData();
-    initializeCalendar(); // Initialize the calendar first
-    console.log('Rendering calendar...');
-    calendar.render(); // Ensure the calendar is rendered
-    console.log('Calendar render called');
-    updateAnalytics(); // Ensure analytics are updated
-    console.log('Calendar setup complete');
-});
-}
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth'
+    });
+    calendar.render();
+  });
     </script>
 </body>
 </html>
