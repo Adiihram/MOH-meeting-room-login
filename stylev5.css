@@ -1,1 +1,163 @@
 
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+#main-content {
+    flex-grow: 1;
+    padding: 20px 20px 20px 270px;
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+}
+
+.analytics-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.analytics-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.analytics-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.analytics-label {
+    flex-grow: 1;
+    font-size: 14px;
+    color: #86868b;
+}
+
+.analytics-value {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#calendar {
+    height: 650px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 1.5em;
+    background-color: #f5f5f7;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.fc .fc-button-primary {
+    background-color: #007aff;
+    border-color: #007aff;
+    font-weight: 500;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #0056b3;
+}
+
+.fc .fc-day-today {
+    background-color: #e8f4ff !important;
+}
+
+.fc-event-title {
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#logoutButton {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background-color: #ff3b30;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.booking-form {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 1000;
+    width: 300px;
+}
+
+.booking-form input, .booking-form select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.booking-form button {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.booking-form button.cancel {
+    background-color: #ff3b30;
+}
