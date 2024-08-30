@@ -37,7 +37,6 @@ body {
     padding: 20px;
     margin-top: 20px;
     margin-left: 270px;
-    padding-left: 270px; /* Ensure there's enough space to the left for the sidebar */
     box-sizing: border-box;    
     
 }
