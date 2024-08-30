@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/path/to/your/apple-touch-icon.png">    
-    <title>DPP Meeting Room Booking - Version 5.1</title>
+    <title>DPP Meeting Room Booking - Version 5.2</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -68,18 +68,14 @@
                     <span class="analytics-label">Vacant Hours</span>
                     <span id="vacantHours" class="analytics-value">0</span>
                 </div>
-            </div>
-        </div>
-
         <div id="main-content">
-            <h1>DPP Meeting Room Booking - Version 5</h1>
+            <header>
+                <h1>DPP Meeting Room Booking - Version 5.2</h1>
+                <button id="logoutButton">Logout</button>
+            </header>
             <div id="calendar"></div>
         </div>
-    </div>
-
-    <button id="logoutButton">Logout</button>
-
-    <div id="bookingForm" class="booking-form" style="display: none;">
+        <div id="bookingForm" class="booking-form" style="display: none;">
         <label for="meetingTitle">Meeting Title</label>
         <input type="text" id="meetingTitle" required>
         <label for="department">Select Department</label>
