@@ -48,15 +48,16 @@ header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    position: relative;
-    z-index: 1;
+    padding: 20px;
+    background-color: #f5f5f7; /* Light background to distinguish the header */
+    border-bottom: 1px solid #e0e0e0;
 }
 
 h1 {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 600;
     margin: 0;
-    padding-bottom: 10px;
+    color: #1d1d1f;
 }
 
 h2 {
@@ -105,9 +106,12 @@ h3 {
     background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    padding: 30px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    padding: 20px;
+    margin-bottom: 20px; /* Removed margin-top as it's handled by header margin-bottom */
+    min-height: 600px;
+    overflow: visible; /* Ensures calendar content isn't cut off */
+    display: flex;
+    flex-direction: column;
 }
 
 footer {
@@ -157,6 +161,19 @@ button:hover {
     background-color: #005bb5;
 }
 
+/* Additional styles to ensure proper rendering of FullCalendar */
+.fc {
+    height: 100%; /* Makes sure FullCalendar uses full height of container */
+}
+
+.fc .fc-view-harness {
+    flex-grow: 1; /* Allows the calendar view to expand */
+}
+
+.fc .fc-scroller {
+    height: auto !important; /* Overrides FullCalendar's fixed height */
+}
+
 .fc .fc-toolbar.fc-header-toolbar {
     margin-bottom: 1.5em;
     background-color: #f5f5f7;
@@ -192,7 +209,7 @@ button:hover {
 
 #logoutButton {
     padding: 8px 16px;
-    background-color: #007aff;
+    background-color: #ff3b30;
     color: white;
     border: none;
     border-radius: 6px;
