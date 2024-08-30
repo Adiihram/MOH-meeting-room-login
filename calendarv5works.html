@@ -1,1 +1,438 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/path/to/your/apple-touch-icon.png">      
+    <title>DPP Meeting Room Booking - Version 5.1</title>
+    <link rel="stylesheet" href="styles.css">   
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="lib/fullcalendar/index.global.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 20px 20px 20px 270px;
+        }
+        .sidebar h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .analytics-card {
+            background-color: #f5f5f7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .analytics-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .analytics-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .analytics-icon {
+            font-size: 16px;
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+        .analytics-label {
+            flex-grow: 1;
+            font-size: 14px;
+            color: #86868b;
+        }
+        .analytics-value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        #calendar {
+            height: 650px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .fc-header-toolbar {
+            margin-bottom: 1.5em!important;
+        }
+        .fc-toolbar-title {
+            font-size: 20px!important;
+            font-weight: 600;
+        }
+        .fc-button-primary {
+            background-color: #007aff!important;
+            border-color: #007aff!important;
+            font-weight: 500;
+        }
+        .fc-button-primary:hover {
+            background-color: #0056b3!important;
+        }
+        .fc-day-today {
+            background-color: #e8f4ff!important;
+        }
+        #logoutButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background-color: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .booking-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            width: 300px;
+        }
+        .booking-form input, .booking-form select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #d2d2d7;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+        .booking-form button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .booking-form button.cancel {
+            background-color: #ff3b30;
+        }    
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="sidebar" class="sidebar">
+            <h2>Analytics</h2>
+
+            <div class="analytics-card">
+                <h3>Bookings</h3>
+                <div class="analytics-item">
+                    <span class="analytics-icon">📅</span>
+                    <span class="analytics-label">Daily</span>
+                    <span id="dailyBookings" class="analytics-value">0</span>
+                </div>
+                <div class="analytics-item">
+                    <span class="analytics-icon">📆</span>
+                    <span class="analytics-label">Weekly</span>
+                    <span id="weeklyBookings" class="analytics-value">0</span>
+                </div>
+                <div class="analytics-item">
+                    <span class="analytics-icon">📅</span>
+                    <span class="analytics-label">Monthly</span>
+                    <span id="monthlyBookings" class="analytics-value">0</span>
+                </div>
+            </div>
+
+            <div class="analytics-card">
+                <h3>Hours Booked</h3>
+                <div class="analytics-item">
+                    <span class="analytics-icon">⏱️</span>
+                    <span class="analytics-label">Daily</span>
+                    <span id="dailyHours" class="analytics-value">0</span>
+                </div>
+                <div class="analytics-item">
+                    <span class="analytics-icon">⏱️</span>
+                    <span class="analytics-label">Weekly</span>
+                    <span id="weeklyHours" class="analytics-value">0</span>
+                </div>
+                <div class="analytics-item">
+                    <span class="analytics-icon">⏱️</span>
+                    <span class="analytics-label">Monthly</span>
+                    <span id="monthlyHours" class="analytics-value">0</span>
+                </div>
+            </div>
+
+            <div class="analytics-card">
+                <h3>Availability</h3>
+                <div class="analytics-item">
+                    <span class="analytics-icon">📊</span>
+                    <span class="analytics-label">Vacant Days</span>
+                    <span id="vacantDays" class="analytics-value">0</span>
+                </div>
+                <div class="analytics-item">
+                    <span class="analytics-icon">📊</span>
+                    <span class="analytics-label">Vacant Hours</span>
+                    <span id="vacantHours" class="analytics-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <h1>DPP Meeting Room Booking - Version 5</h1>
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <button id="logoutButton">Logout</button>
+
+    <div id="bookingForm" class="booking-form" style="display: none;">
+        <label for="meetingTitle">Meeting Title</label>
+        <input type="text" id="meetingTitle" required>
+        <label for="department">Select Department</label>
+        <select id="department">
+            <option>Department of Medical Services</option>
+            <option>Department of Public Health</option>
+            <option>Department of Health Technology</option>
+            <option>Department of Policy and Planning</option>
+            <option>Department of Health Regulation</option>
+        </select>
+        <label for="startTime">Start Time</label>
+        <input type="time" id="startTime" required>
+        <label for="endTime">End Time</label>
+        <input type="time" id="endTime" required>
+        <button id="saveBooking">Save Booking</button>
+        <button id="cancelBooking" class="cancel">Cancel</button>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAED2NeWY224WpucUIFIef6Ekm7lUufM0o",
+            authDomain: "moh-meeting-room-booking.firebaseapp.com",
+            databaseURL: "https://moh-meeting-room-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "moh-meeting-room-booking",
+            storageBucket: "moh-meeting-room-booking.appspot.com",
+            messagingSenderId: "629503206549",
+            appId: "1:629503206549:web:4b172b7f392b7aef0de79c",
+            measurementId: "G-MDSDN8ZS5F"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the database service
+        const db = firebase.database();
+
+        let calendar;
+        let selectedDate;
+
+        function checkFirebaseData() {
+            db.ref('events').once('value')
+                .then(function(snapshot) {
+                    console.log('Firebase connection successful');
+                    console.log('Raw Firebase data:', snapshot.val());
+                })
+                .catch(function(error) {
+                    console.error('Error connecting to Firebase:', error);
+                });
+        }
+
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) {
+                console.error('Calendar element not found');
+                return;
+            }
+
+            try {
+                console.log('Initializing calendar...');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    slotMinTime: '08:00:00',
+                    slotMaxTime: '18:00:00',
+                    allDaySlot: false,
+                    selectable: true,
+                    height: 'auto',
+                    select: function (info) {
+                        selectedDate = info.start;
+                        document.getElementById('bookingForm').style.display = 'block';
+                    },
+                    eventClick: function (info) {
+                        if (confirm(`Do you want to cancel the booking: ${info.event.title}?`)) {
+                            db.ref('events/' + info.event.id).remove().then(() => {
+                                info.event.remove();
+                                updateAnalytics();
+                            });
+                        }
+                    },
+                    events: function (fetchInfo, successCallback, failureCallback) {
+                        db.ref('events').once('value').then(function (snapshot) {
+                            const events = [];
+                            snapshot.forEach(function (childSnapshot) {
+                                const event = childSnapshot.val();
+                                event.id = childSnapshot.key;
+                                events.push(event);
+                            });
+                            console.log('Events loaded:', events);
+                            successCallback(events);
+                        }).catch(error => {
+                            console.error('Error fetching events:', error);
+                            failureCallback(error);
+                        });
+                    },
+                    eventContent: function(arg) {
+                        return {
+                            html: `<div class="fc-event-title">${arg.event.title}</div>`
+                        };
+                    }
+                });
+                calendar.render();
+            } catch (error) {
+                console.error('Error initializing calendar:', error);
+            }
+        }
+
+        function saveBooking() {
+            const title = document.getElementById('meetingTitle').value;
+            const department = document.getElementById('department').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            if (title && department && startTime && endTime) {
+                const startDateTime = new Date(selectedDate);
+                const [startHours, startMinutes] = startTime.split(':');
+                startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
+                const endDateTime = new Date(selectedDate);
+                const [endHours, endMinutes] = endTime.split(':');
+                endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
+                const newEvent = {
+                    title: `${title} - ${department}`,
+                    start: startDateTime.toISOString(),
+                    end: endDateTime.toISOString(),
+                    color: getDepartmentColor(department)
+                };
+                db.ref('events').push(newEvent).then(function (ref) {
+                    calendar.addEvent(newEvent);
+                    closeBookingForm();
+                    updateAnalytics();
+                }).catch(function(error) {
+                    console.error("Error saving booking:", error);
+                });
+            }
+        }
+
+        function closeBookingForm() {
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('meetingTitle').value = '';
+            document.getElementById('department').value = '';
+            document.getElementById('startTime').value = '';
+            document.getElementById('endTime').value = '';
+        }
+
+        function getDepartmentColor(department) {
+            const colors = {
+                'Department of Medical Services': '#007AFF',
+                'Department of Public Health': '#34C759',
+                'Department of Health Technology': '#FF3B30',
+                'Department of Policy and Planning': '#FF9500',
+                'Department of Health Regulation': '#5856D6'
+            };
+            return colors[department] || '#8E8E93';
+        }
+
+        function updateAnalytics() {
+            db.ref('events').once('value').then(function(snapshot) {
+                let dailyBookings = 0;
+                let weeklyBookings = 0;
+                let monthlyBookings = 0;
+                let dailyHours = 0;
+                let weeklyHours = 0;
+                let monthlyHours = 0;
+
+                snapshot.forEach(function(childSnapshot) {
+                    const event = childSnapshot.val();
+                    const eventDate = new Date(event.start);
+
+                    const now = new Date();
+                    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                    if (eventDate >= startOfDay) dailyBookings++;
+                    if (eventDate >= startOfWeek) weeklyBookings++;
+                    if (eventDate >= startOfMonth) monthlyBookings++;
+
+                    const duration = (new Date(event.end) - eventDate) / (1000 * 60 * 60); // Duration in hours
+                    if (eventDate >= startOfDay) dailyHours += duration;
+                    if (eventDate >= startOfWeek) weeklyHours += duration;
+                    if (eventDate >= startOfMonth) monthlyHours += duration;
+                });
+
+                document.getElementById('dailyBookings').textContent = dailyBookings;
+                document.getElementById('weeklyBookings').textContent = weeklyBookings;
+                document.getElementById('monthlyBookings').textContent = monthlyBookings;
+                document.getElementById('dailyHours').textContent = dailyHours.toFixed(2);
+                document.getElementById('weeklyHours').textContent = weeklyHours.toFixed(2);
+                document.getElementById('monthlyHours').textContent = monthlyHours.toFixed(2);
+            }).catch(function(error) {
+                console.error("Error updating analytics:", error);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('FullCalendar object:', typeof FullCalendar !== 'undefined' ? 'Loaded' : 'Not loaded');
+            checkFirebaseData();
+            initializeCalendar();
+            updateAnalytics();
+
+            // Event listeners for booking form
+            document.getElementById('saveBooking').addEventListener('click', saveBooking);
+            document.getElementById('cancelBooking').addEventListener('click', closeBookingForm);
+
+            // Event listener for logout button
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                // Implement logout functionality here
+                console.log('Logout clicked');
+            });
+        });
+    </script>
+</body>
+</html>
