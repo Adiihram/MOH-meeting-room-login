@@ -410,6 +410,7 @@ function saveBooking() {
    
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+    console.log('FullCalendar object:', FullCalendar);
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth'
