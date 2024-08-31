@@ -24,6 +24,8 @@ html {
     flex: 1;
     overflow: hidden;
     width: 100%; /* Add this */
+    padding: 0;
+    margin: 0;
 }
 
 .sidebar {
