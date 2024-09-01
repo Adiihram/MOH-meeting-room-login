@@ -236,22 +236,6 @@ button:hover {
     text-overflow: ellipsis;
 }
 
-#logoutButton {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    background-color: #ff3b30;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#logoutButton:hover {
-    background-color: #005bb5;
-}
-
 .booking-form {
     display: none;
     position: fixed;
