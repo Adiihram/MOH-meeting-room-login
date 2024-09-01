@@ -69,9 +69,11 @@ header {
 
 h1 {
     font-size: 24px;
-    font-weight: 600;
-    margin: 0;
-    color: #1d1d1f;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 2px solid #007aff;
 }
 
 h2 {
