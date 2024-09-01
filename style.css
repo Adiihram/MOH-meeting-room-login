@@ -276,7 +276,7 @@ button:hover {
 .booking-form button.cancel {
     background-color: #ff3b30;
 }
-<style>
+
 .logout-button {
     width: 100%;
     padding: 10px;
@@ -293,4 +293,3 @@ button:hover {
 .logout-button:hover {
     background-color: #ff6b6b;
 }
-</style>
