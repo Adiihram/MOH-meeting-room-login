@@ -441,7 +441,7 @@
             });
         });
         
-        <script>
+<script>
 // Initialize Firebase Auth
 firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
@@ -455,6 +455,7 @@ firebase.auth().onAuthStateChanged(function(user) {
 
 // Logout functionality
 document.getElementById('logoutButton').addEventListener('click', function() {
+    console.log('Logout clicked');
     firebase.auth().signOut().then(function() {
         console.log('User signed out successfully');
         window.location.href = 'index.html'; // Redirect to login page
@@ -462,6 +463,6 @@ document.getElementById('logoutButton').addEventListener('click', function() {
         console.error('Sign out error', error);
     });
 });
-</script>   
+</script>
 </body>
 </html>
