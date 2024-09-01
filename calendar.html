@@ -439,15 +439,27 @@
             });
         });
         
-        document.getElementById('logoutButton').addEventListener('click', function() {
-    // Add Firebase logout logic here
-    firebase.auth().signOut().then(() => {
-        // Redirect to login page or show logged out state
-        window.location.href = 'login.html';
-    }).catch((error) => {
-        console.error('Logout error:', error);
+        <script>
+// Initialize Firebase Auth
+firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+        console.log('User is signed in');
+    } else {
+        console.log('No user is signed in');
+        // Redirect to login page if no user is signed in
+        window.location.href = 'index.html';
+    }
+});
+
+// Logout functionality
+document.getElementById('logoutButton').addEventListener('click', function() {
+    firebase.auth().signOut().then(function() {
+        console.log('User signed out successfully');
+        window.location.href = 'index.html'; // Redirect to login page
+    }).catch(function(error) {
+        console.error('Sign out error', error);
     });
-});    
-    </script>
+});
+</script>   
 </body>
 </html>
